@@ -1,0 +1,15 @@
+<div class="quote-card">
+    <div class="quote-text">{{ quote.quote_text|clean_text }}</div>
+    <div class="quote-meta">
+        <div class="quote-tags">
+            {% for tag in quote.tags %}
+            <span class="theme-tag theme-{{ tag.name }}">{{ tag.name|upper }}</span>
+            {% endfor %}
+        </div>
+        {% if quote.source_link %}
+        <div class="quote-source">
+            <a href="{{ quote.source_link }}" target="_blank" rel="noopener">Source</a>
+        </div>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}{{ author.name }} - BeliefGraph{% endblock %}
+{% block description %}Explore the life, philosophy, and quotes of {{ author.name }} focused on truth, love, and beauty.{% endblock %}
+
+{% block content %}
+<div class="author-profile">
+    <div class="container">
+        <!-- Author Header -->
+        {% include 'components/author_info.html' %}
+
+        <!-- Statistics -->
+        {% if author.quotes %}
+        <div class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">{{ author.quotes|length }}</span>
+                    <span class="stat-label">Quotes</span>
+                </div>
+                {% set theme_counts = author.get_quote_count_by_theme() %}
+                <div class="stat-item">
+                    <span class="stat-number">{{ theme_counts.truth }}</span>
+                    <span class="stat-label">Truth</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ theme_counts.love }}</span>
+                    <span class="stat-label">Love</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ theme_counts.beauty }}</span>
+                    <span class="stat-label">Beauty</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Biography Section -->
+        {% include 'components/biography.html' %}
+
+        <!-- Quotes Section -->
+        {% if author.quotes %}
+        <section class="content-section">
+            <h2 class="section-title">Quotes</h2>
+            <div class="quotes-grid">
+                {% for quote in author.quotes %}
+                    {% include 'components/quote.html' %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+</div>
+
+{% set current_author = author %}
+{% endblock %}

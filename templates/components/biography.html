@@ -1,0 +1,8 @@
+{% if author.biography %}
+<section class="content-section">
+    <h2 class="section-title">Biography</h2>
+    <div class="biography-text">
+        {{ author.biography|markdown|safe }}
+    </div>
+</section>
+{% endif %}

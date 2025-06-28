@@ -1,0 +1,165 @@
+###############################################################################
+#  Universal .gitattributes for Large-Asset Projects
+#  – Built for cross-platform & multi-language repos                         –
+#  – Adjust or comment-out any pattern you don’t need                        –
+###############################################################################
+
+########## 1. Raster images (lossy + lossless) ###############################
+*.png      filter=lfs diff=lfs merge=lfs -text
+*.jpg
+*.jpeg
+*.jpe
+*.jfif
+*.jp2
+*.gif
+*.bmp
+*.tif
+*.tiff
+*.webp
+*.heic
+*.heif
+
+########## 2. Raw & high-bit-depth photos ####################################
+*.arw
+*.cr2
+*.nef
+*.dng
+*.orf
+*.rw2
+*.srw
+
+########## 3. Vector / design files (often huge) #############################
+*.psd
+*.ai
+*.eps
+*.pdf  
+*.indd
+*.sketch
+*.fig
+*.xd
+
+########## 4. Audio ###########################################################
+*.wav
+*.flac
+*.aiff
+*.aif
+*.aifc
+*.ogg
+*.oga
+*.opus
+*.mp3
+*.aac
+*.m4a
+*.wma
+
+########## 5. Video ###########################################################
+*.mp4
+*.m4v
+*.mov
+*.qt
+*.mkv
+*.webm
+*.avi
+*.wmv
+*.flv
+*.f4v
+*.ogv
+*.3gp
+*.3g2
+*.mts
+*.m2ts
+*.ts
+
+########## 6. 3-D / CAD / game assets ########################################
+*.blend
+*.fbx
+*.obj
+*.stl
+*.3ds
+*.dae
+*.ply
+*.usd
+*.usdz
+*.gltf
+*.glb
+*.uasset  
+*.umap
+*.unity   
+*.prefab
+*.asset
+*.mat
+*.cubemap
+
+########## 7. Scientific / data blobs ########################################
+*.h5
+*.hdf5
+*.nc
+*.npz
+*.npy
+*.mat
+*.parquet
+*.feather
+*.pkl
+*.csv.gz   
+
+########## 8. Office / spreadsheet / DTP #####################################
+*.xlsx
+*.xlsb
+*.xlsm
+*.xls
+*.ods
+*.odt
+*.odp
+*.pptx
+*.key
+
+########## 9. Archives & installers ##########################################
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
+*.tgz
+*.tar.bz2
+*.bz2
+*.xz
+*.pkg
+*.dmg
+*.exe
+*.msi
+*.apk
+*.ipa
+
+########## 10. Fonts (often bulky binaries) ##################################
+*.ttf
+*.otf
+*.woff
+*.woff2
+
+########## 11. Misc. binaries often checked in ###############################
+*.iso
+*.img
+*.dll
+*.so
+*.dylib
+*.pdb       
+*.class     
+*.jar       
+*.war
+*.ear
+*.a
+*.lib
+
+###############################################################################
+# NOTES
+# -----
+# • Patterns are case-insensitive by default on Windows/macOS; Git treats them
+#   case-sensitively on Linux unless core.ignorecase=true.
+# • If you *don’t* want certain binary types under version control at all
+#   (e.g., large data dumps or proprietary dumps), add them to .gitignore
+#   instead of (or in addition to) routing them through LFS.
+# • The “diff=lfs merge=lfs” flags disable Git’s normal diff/merge for these
+#   files, avoiding accidental corruption.
+# • After adding this file, run:   git lfs install   then recommit anything
+#   you want retroactively moved into LFS (git lfs migrate import …).
+###############################################################################

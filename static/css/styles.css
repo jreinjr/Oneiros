@@ -1,0 +1,542 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+}
+
+#graph-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+#controls-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 20px;
+    min-width: 280px;
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+#controls-panel.minimized {
+    padding: 10px 15px;
+    min-width: auto;
+}
+
+#controls-panel.minimized .control-group {
+    display: none;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.panel-title {
+    color: #4CAF50;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+.minimize-btn {
+    background: none;
+    border: 1px solid #4CAF50;
+    color: #4CAF50;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.minimize-btn:hover {
+    background: #4CAF50;
+    color: #000;
+}
+
+#controls-panel.minimized .panel-header {
+    margin-bottom: 0;
+}
+
+.control-group {
+    margin-bottom: 20px;
+}
+
+.control-group h3 {
+    margin: 0 0 10px 0;
+    color: #4CAF50;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.control-item {
+    margin-bottom: 12px;
+}
+
+.control-item label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+    color: #ccc;
+}
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+input[type="range"] {
+    flex: 1;
+    height: 4px;
+    background: #333;
+    outline: none;
+    border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #4CAF50;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #4CAF50;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.value-display {
+    min-width: 50px;
+    text-align: right;
+    font-size: 12px;
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* Theme toggle buttons */
+.theme-toggle {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px;
+    border-radius: 6px;
+}
+
+.theme-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: #ccc;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.theme-btn.active {
+    color: #fff;
+}
+
+.theme-btn.truth {
+    border: 1px solid transparent;
+}
+
+.theme-btn.truth.active {
+    background: #2196F3;
+    border-color: #2196F3;
+}
+
+.theme-btn.beauty {
+    border: 1px solid transparent;
+}
+
+.theme-btn.beauty.active {
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.theme-btn.love {
+    border: 1px solid transparent;
+}
+
+.theme-btn.love.active {
+    background: #F44336;
+    border-color: #F44336;
+}
+
+/* Update button colors based on theme */
+button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #45a049;
+}
+
+/* Theme-specific button colors */
+.theme-truth button {
+    background: #2196F3;
+}
+
+.theme-truth button:hover {
+    background: #1976D2;
+}
+
+.theme-love button {
+    background: #F44336;
+}
+
+.theme-love button:hover {
+    background: #D32F2F;
+}
+
+/* Theme-specific UI colors */
+.theme-truth .control-group h3,
+.theme-truth .value-display,
+.theme-truth .panel-title,
+.theme-truth .minimize-btn {
+    color: #2196F3;
+}
+
+.theme-truth .minimize-btn {
+    border-color: #2196F3;
+}
+
+.theme-truth .minimize-btn:hover {
+    background: #2196F3;
+}
+
+.theme-truth input[type="range"]::-webkit-slider-thumb,
+.theme-truth input[type="range"]::-moz-range-thumb {
+    background: #2196F3;
+}
+
+.theme-love .control-group h3,
+.theme-love .value-display,
+.theme-love .panel-title,
+.theme-love .minimize-btn {
+    color: #F44336;
+}
+
+.theme-love .minimize-btn {
+    border-color: #F44336;
+}
+
+.theme-love .minimize-btn:hover {
+    background: #F44336;
+}
+
+.theme-love input[type="range"]::-webkit-slider-thumb,
+.theme-love input[type="range"]::-moz-range-thumb {
+    background: #F44336;
+}
+
+button:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-active {
+    background: #4CAF50;
+    animation: pulse 2s infinite;
+}
+
+.theme-truth .status-active {
+    background: #2196F3;
+}
+
+.theme-love .status-active {
+    background: #F44336;
+}
+
+.status-inactive {
+    background: #666;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+#poetry-log {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 40px;
+    border-radius: 16px;
+    font-size: 32px;
+    color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    min-width: 800px;
+    max-width: 1200px;
+    border: 1px solid rgba(51, 51, 51, 0.3);
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+#log-entries {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.log-entry {
+    padding: 16px 24px;
+    background: rgba(76, 175, 80, 0.1);
+    border-left: 6px solid #4CAF50;
+    border-radius: 8px;
+    transition: opacity 0.5s ease-out;
+    line-height: 1.4;
+    font-family: "Mori", 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    word-break: break-word;
+    position: relative;
+}
+
+.theme-truth .log-entry {
+    background: rgba(33, 150, 243, 0.1);
+    border-left-color: #2196F3;
+}
+
+.theme-love .log-entry {
+    background: rgba(244, 67, 54, 0.1);
+    border-left-color: #F44336;
+}
+
+.log-entry.fade-1 { opacity: 0.5; }
+.log-entry.fade-2 { opacity: 0.3; }
+.log-entry.fade-3 { opacity: 0.2; }
+
+.log-title {
+    display: none;
+}
+
+.theme-truth .log-title {
+    color: #2196F3;
+}
+
+.theme-love .log-title {
+    color: #F44336;
+}
+
+#node-popup {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    padding: 12px 20px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    backdrop-filter: blur(10px);
+    cursor: move;
+    user-select: none;
+    z-index: 1001;
+    display: none;
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.theme-truth #node-popup {
+    border-color: #2196F3;
+    box-shadow: 0 4px 20px rgba(33, 150, 243, 0.3);
+}
+
+.theme-love #node-popup {
+    border-color: #F44336;
+    box-shadow: 0 4px 20px rgba(244, 67, 54, 0.3);
+}
+
+#node-popup.visible {
+    display: block;
+}
+
+#node-popup-title {
+    color: #4CAF50;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.theme-truth #node-popup-title {
+    color: #2196F3;
+}
+
+.theme-love #node-popup-title {
+    color: #F44336;
+}
+
+#node-popup-name {
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 1.5;
+}
+
+#connection-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.connection-path {
+    stroke: #4CAF50;
+    stroke-width: 2;
+    fill: none;
+    opacity: 0.8;
+    stroke-dasharray: 5, 5;
+    animation: dash 20s linear infinite;
+}
+
+.theme-truth .connection-path {
+    stroke: #2196F3;
+}
+
+.theme-love .connection-path {
+    stroke: #F44336;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: -100;
+    }
+}
+
+/* GreenSock Text Animation Styles */
+@font-face {
+    font-display: block;
+    font-family: Mori;
+    font-style: normal;
+    font-weight: 600;
+    src: url(https://assets.codepen.io/16327/PPMori-Regular.woff) format("woff");
+}
+
+.text-scramble__content {
+    position: relative;
+    padding-bottom: 1.1em;
+}
+
+.text-scramble__text {
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.text-scramble__text span {
+    word-break: break-word;
+}
+
+.text-scramble__text img {
+    display: inline-block;
+    height: 0.9em;
+    width: auto;
+}
+
+/* Override log entry styles for animated text */
+.log-entry.animating {
+    position: relative;
+    overflow: hidden;
+}
+
+.log-entry .text-scramble__content {
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
+    margin: 0;
+    padding: 0;
+}
+
+/* Blinking cursor animation */
+.blinking-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background-color: currentColor;
+    animation: blink 1s infinite;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+}
+
+@keyframes blink {
+    0%, 49% {
+        opacity: 1;
+    }
+    50%, 100% {
+        opacity: 0;
+    }
+}
+
+.log-entry .text-content {
+    display: inline;
+}
+
+.log-entry.typing .blinking-cursor {
+    display: inline-block;
+}
+
+.log-entry.complete .blinking-cursor {
+    display: none;
+}

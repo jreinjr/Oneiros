@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - BeliefGraph{% endblock %}
+{% block description %}The requested page could not be found.{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 0;">
+    <section class="content-section">
+        <h2 class="section-title">Page Not Found</h2>
+        <div class="intro-text">
+            <p>Sorry, the page you're looking for doesn't exist.</p>
+            <p>You can browse our collection of authors using the sidebar, or return to the <a href="{{ url_for('index') }}">home page</a>.</p>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BeliefGraph{% endblock %}</title>
+    <meta name="description" content="{% block description %}Explore the wisdom of great minds through their thoughts on truth, love, and beauty.{% endblock %}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">
+                    <a href="{{ url_for('index') }}">BeliefGraph</a>
+                </h1>
+                <p class="sidebar-subtitle">Truth • Love • Beauty</p>
+                <div class="nav-links">
+                    <a href="{{ url_for('index') }}" class="nav-link">Authors</a>
+                    <a href="{{ url_for('graph_visualization') }}" class="nav-link">3D Graph</a>
+                </div>
+            </div>
+            
+            {% include 'components/sidebar.html' %}
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="site-header">
+                <div class="container">
+                    <h1 class="site-title">BeliefGraph</h1>
+                    <p class="site-subtitle">Exploring Truth, Love, and Beauty Through Great Minds</p>
+                </div>
+            </header>
+
+            {% block content %}{% endblock %}
+
+            <footer class="site-footer">
+                <div class="container">
+                    <p class="footer-text">
+                        BeliefGraph - Exploring the intersection of Truth, Love, and Beauty<br>
+                        Generated on {{ generation_date }}
+                    </p>
+                </div>
+            </footer>
+        </main>
+    </div>
+</body>
+</html>

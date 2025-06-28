@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}BeliefGraph - Truth, Love, and Beauty{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 0;">
+    <section class="content-section">
+        <h2 class="section-title">Welcome to BeliefGraph</h2>
+        <div class="intro-text">
+            <p>Explore the wisdom of {{ authors|length }} great minds through their thoughts on truth, love, and beauty. 
+            This collection spans centuries and cultures, bringing together philosophers, poets, artists, and thinkers 
+            who have shaped our understanding of these fundamental human concepts.</p>
+            
+            <p>Select an author from the sidebar to begin your journey through their life and ideas.</p>
+        </div>
+        
+        <div class="theme-overview">
+            <h3>Our Three Themes</h3>
+            <div class="theme-grid">
+                <div class="theme-card theme-truth">
+                    <h4>Truth</h4>
+                    <p>The pursuit of knowledge, wisdom, and understanding</p>
+                </div>
+                <div class="theme-card theme-love">
+                    <h4>Love</h4>
+                    <p>The exploration of compassion, connection, and human bonds</p>
+                </div>
+                <div class="theme-card theme-beauty">
+                    <h4>Beauty</h4>
+                    <p>The appreciation of art, nature, and aesthetic experience</p>
+                </div>
+            </div>
+        </div>
+        
+        {% if authors %}
+        <div class="featured-authors">
+            <h3>Featured Authors</h3>
+            <div class="quotes-grid">
+                {% for author in authors[:6] %}  {# Show first 6 authors #}
+                <div class="quote-card">
+                    <h4 style="margin-bottom: 1rem; font-size: 1.5rem;">
+                        <a href="{{ url_for('author_detail', author_name=author.name|url_safe) }}" 
+                           style="text-decoration: none; color: var(--color-primary);">
+                            {{ author.name }}
+                        </a>
+                    </h4>
+                    {% if author.birth_year %}
+                    <p style="color: var(--color-secondary); margin-bottom: 1rem;">
+                        {{ author.birth_year|format_years(author.death_year) }}
+                        {% if author.birth_location %} • {{ author.birth_location }}{% endif %}
+                    </p>
+                    {% endif %}
+                    {% if author.quotes %}
+                    <div class="quote-meta">
+                        <div class="quote-tags">
+                            {% set theme_counts = author.get_quote_count_by_theme() %}
+                            {% if theme_counts.truth > 0 %}
+                            <span class="theme-tag theme-truth">{{ theme_counts.truth }} Truth</span>
+                            {% endif %}
+                            {% if theme_counts.love > 0 %}
+                            <span class="theme-tag theme-love">{{ theme_counts.love }} Love</span>
+                            {% endif %}
+                            {% if theme_counts.beauty > 0 %}
+                            <span class="theme-tag theme-beauty">{{ theme_counts.beauty }} Beauty</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

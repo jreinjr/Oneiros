@@ -1,0 +1,9 @@
+<div class="author-header">
+    <h1 class="author-name">{{ author.name }}</h1>
+    {% if author.birth_year %}
+    <div class="author-years">{{ author.birth_year|format_years(author.death_year) }}</div>
+    {% endif %}
+    {% if author.birth_location %}
+    <div class="author-location">{{ author.birth_location }}</div>
+    {% endif %}
+</div>

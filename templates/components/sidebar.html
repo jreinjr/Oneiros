@@ -1,0 +1,45 @@
+<nav class="sidebar-nav">
+    <div class="sidebar-search">
+        <input type="text" id="author-search" placeholder="Search authors..." class="search-input">
+    </div>
+    
+    <div class="author-list">
+        <h3 class="author-list-title">Authors</h3>
+        <ul class="author-links">
+            {% for author in all_authors %}
+            <li class="author-item">
+                <a href="{{ url_for('author_detail', author_name=author.name|url_safe) }}" 
+                   class="author-link {% if current_author and current_author.name == author.name %}active{% endif %}">
+                    {{ author.name }}
+                    {% if author.birth_year %}
+                    <span class="author-years">{{ author.birth_year|format_years(author.death_year) }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</nav>
+
+<script>
+// Simple author search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('author-search');
+    const authorItems = document.querySelectorAll('.author-item');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            authorItems.forEach(item => {
+                const authorName = item.textContent.toLowerCase();
+                if (authorName.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+});
+</script>
