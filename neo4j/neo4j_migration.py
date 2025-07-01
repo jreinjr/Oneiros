@@ -5,7 +5,7 @@ import sys
 from neo4j import GraphDatabase
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from database import Base, Author, Quote, Tag, get_database_url
+from research.database import Base, Author, Quote, Tag, get_database_url
 from datetime import datetime
 import logging
 
