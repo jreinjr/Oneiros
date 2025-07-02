@@ -8,7 +8,7 @@
         <ul class="author-links">
             {% for author in all_authors %}
             <li class="author-item">
-                <a href="{{ url_for('author_detail', author_name=author.name|url_safe) }}" 
+                <a href="{{ url_for('wiki_author_detail', author_name=author.name|url_safe) }}" 
                    class="author-link {% if current_author and current_author.name == author.name %}active{% endif %}">
                     {{ author.name }}
                     {% if author.birth_year %}

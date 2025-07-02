@@ -17,13 +17,9 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h1 class="sidebar-title">
-                    <a href="{{ url_for('index') }}">BeliefGraph</a>
+                    <a href="{{ url_for('wiki_index') }}">BeliefGraph</a>
                 </h1>
                 <p class="sidebar-subtitle">Truth • Love • Beauty</p>
-                <div class="nav-links">
-                    <a href="{{ url_for('index') }}" class="nav-link">Authors</a>
-                    <a href="{{ url_for('graph_visualization') }}" class="nav-link">3D Graph</a>
-                </div>
             </div>
             
             {% include 'components/sidebar.html' %}

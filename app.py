@@ -16,7 +16,13 @@ init_database()
 
 @app.route('/')
 def index():
-    """Home page showing all authors"""
+    """Home page - 3D Graph visualization"""
+    return render_template('pages/graph.html')
+
+@app.route('/wiki')
+@app.route('/wiki/')
+def wiki_index():
+    """Wiki home page showing all authors"""
     session = get_session()
     try:
         authors = get_all_authors(session)
@@ -27,9 +33,9 @@ def index():
     finally:
         session.close()
 
-@app.route('/author/<author_name>')
-def author_detail(author_name):
-    """Individual author page"""
+@app.route('/wiki/author/<author_name>')
+def wiki_author_detail(author_name):
+    """Individual author page in wiki"""
     session = get_session()
     try:
         # Replace underscores with spaces for author name lookup
@@ -50,14 +56,10 @@ def author_detail(author_name):
         session.close()
 
 @app.route('/graph')
+@app.route('/graph/')
 def graph_visualization():
-    """3D Graph visualization page"""
-    session = get_session()
-    try:
-        all_authors = get_all_authors(session)
-        return render_template('pages/graph.html', all_authors=all_authors)
-    finally:
-        session.close()
+    """3D Graph visualization page (same as home)"""
+    return render_template('pages/graph.html')
 
 @app.route('/api/neo4j-config')
 def neo4j_config():
