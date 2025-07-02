@@ -164,6 +164,9 @@ class Neo4jVectorIndex:
             return results
 
 def main():
+    import torch
+    print(torch.cuda.is_available())
+
     """Main function to set up vector embeddings"""
     # Neo4j connection details
     NEO4J_URI = "neo4j://127.0.0.1:7687"

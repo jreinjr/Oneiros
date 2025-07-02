@@ -45,25 +45,8 @@ export class LoggerManager {
         const highlightSteps = this.config.get('highlightSteps');
         const connectionString = this.formatConnectionString(node, nodesMap || new Map(), highlightSteps);
         
-        // Check if AI-enhanced logging is enabled
-        if (this.config.get('aiEnhancedLogging')) {
-            try {
-                const enhancedString = await this.enhanceWithAI(connectionString);
-                this.entries.unshift(enhancedString);
-            } catch (error) {
-                console.error('AI enhancement failed, using original message:', error);
-                this.entries.unshift(connectionString);
-            }
-        } else {
-            this.entries.unshift(connectionString);
-        }
-        
-        // Keep only maxEntries
-        if (this.entries.length > this.maxEntries) {
-            this.entries = this.entries.slice(0, this.maxEntries);
-        }
-        
-        this.updateDisplay();
+        // Use unified logging pathway with typewriter animation
+        await this.addLogEntryWithAnimation(connectionString);
     }
 
     /**
@@ -178,30 +161,8 @@ export class LoggerManager {
      * @param {string} type - Entry type ('info', 'warning', 'error')
      */
     async addCustomEntry(message, type = 'info') {
-        // Check if AI-enhanced logging is enabled
-        if (this.config.get('aiEnhancedLogging')) {
-            try {
-                const enhancedMessage = await this.enhanceWithAI(message);
-                this.entries.unshift(enhancedMessage);
-            } catch (error) {
-                console.error('AI enhancement failed, using original message:', error);
-                this.entries.unshift(message);
-            }
-        } else {
-            this.entries.unshift(message);
-        }
-        
-        // Keep only maxEntries
-        if (this.entries.length > this.maxEntries) {
-            this.entries = this.entries.slice(0, this.maxEntries);
-        }
-        
-        this.updateDisplay();
-        
-        // Add type-specific styling to the latest entry
-        if (this.logContainer && this.logContainer.firstChild) {
-            this.logContainer.firstChild.classList.add(`log-${type}`);
-        }
+        // Use unified logging pathway with typewriter animation
+        await this.addLogEntryWithAnimation(message, null, type);
     }
 
     /**
@@ -388,12 +349,43 @@ export class LoggerManager {
      * @param {string} quoteText - The quote text to display
      * @param {string} author - The author of the quote (optional)
      */
-    addQuoteEntry(quoteText, author = null) {
+    async addQuoteEntry(quoteText, author = null) {
         if (!quoteText) return;
         
-        // Create the log entry element
+        // Use unified logging pathway with typewriter animation
+        await this.addLogEntryWithAnimation(quoteText, author);
+    }
+    
+    /**
+     * Unified method to add log entry with animation and AI enhancement
+     * @param {string} text - Text to display
+     * @param {string} author - Author name (optional)
+     * @param {string} type - Entry type ('info', 'warning', 'error')
+     */
+    async addLogEntryWithAnimation(text, author = null, type = 'info') {
+        if (!text) return;
+        
+        // Determine final text to display
+        let finalText = text;
+        
+        // Check if AI-enhanced logging is enabled
+        if (this.config.get('aiEnhancedLogging')) {
+            try {
+                finalText = await this.enhanceWithAI(text);
+            } catch (error) {
+                console.error('AI enhancement failed, using original message:', error);
+                finalText = text;
+            }
+        }
+        
+        // Create the log entry element with typewriter animation
         const logEntry = document.createElement('div');
         logEntry.className = 'log-entry typing';
+        
+        // Add type-specific styling
+        if (type !== 'info') {
+            logEntry.classList.add(`log-${type}`);
+        }
         
         // Create text content span
         const textContent = document.createElement('span');
@@ -410,8 +402,9 @@ export class LoggerManager {
         // Add to entries array as an object with the element
         const entryObj = {
             element: logEntry,
-            text: quoteText,
-            author: author
+            text: finalText,
+            author: author,
+            type: type
         };
         
         this.entries.unshift(entryObj);
@@ -424,7 +417,7 @@ export class LoggerManager {
         this.updateDisplay();
         
         // Start the typing animation
-        this.animateTyping(textContent, quoteText, () => {
+        this.animateTyping(textContent, finalText, () => {
             // Remove typing class and hide cursor when done
             logEntry.classList.remove('typing');
             logEntry.classList.add('complete');
@@ -475,7 +468,7 @@ export class LoggerManager {
                 },
                 body: JSON.stringify({
                     model: model,
-                    prompt: `Transform this technical log message into a poetic or philosophical statement. Keep it concise (under 100 characters). Original message: "${message}"`,
+                    prompt: `Write a haiku inspired by the following message: "${message}"`,
                     stream: false,
                     options: {
                         temperature: 0.8,
