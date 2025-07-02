@@ -281,34 +281,6 @@ export class GraphVisualizer {
         }
     }
 
-    /**
-     * Get camera position and target
-     * @returns {Object} Camera state
-     */
-    getCameraState() {
-        return {
-            position: this.graph.cameraPosition(),
-            target: { x: 0, y: 0, z: 0 } // Default target
-        };
-    }
-
-    /**
-     * Set camera position and target
-     * @param {Object} position - Camera position
-     * @param {Object} target - Camera target
-     * @param {number} duration - Transition duration in ms
-     */
-    setCameraPosition(position, target = { x: 0, y: 0, z: 0 }, duration = 0) {
-        this.graph.cameraPosition(position, target, duration);
-    }
-
-    /**
-     * Zoom to fit all nodes
-     * @param {number} duration - Transition duration in ms
-     */
-    zoomToFit(duration = 2000) {
-        this.graph.zoomToFit(duration);
-    }
 
     /**
      * Get screen coordinates for a 3D point

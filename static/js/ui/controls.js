@@ -29,8 +29,7 @@ export class ControlsManager {
      */
     setupSliders() {
         const sliders = [
-            'nodeCount', 'connectionDensity', 'orbitSpeed', 
-            'focusDuration', 'transitionSpeed', 'orbitDistance',
+            'nodeCount', 'connectionDensity',
             'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps'
         ];
 
@@ -84,23 +83,6 @@ export class ControlsManager {
             });
         }
 
-        // Toggle Orbit button
-        const toggleOrbitBtn = document.getElementById('toggleOrbit');
-        if (toggleOrbitBtn) {
-            this.elements.set('toggleOrbit', toggleOrbitBtn);
-            toggleOrbitBtn.addEventListener('click', () => {
-                this.triggerCallback('toggleOrbit');
-            });
-        }
-
-        // Reset Camera button
-        const resetCameraBtn = document.getElementById('resetCamera');
-        if (resetCameraBtn) {
-            this.elements.set('resetCamera', resetCameraBtn);
-            resetCameraBtn.addEventListener('click', () => {
-                this.triggerCallback('resetCamera');
-            });
-        }
     }
 
     /**
@@ -109,8 +91,7 @@ export class ControlsManager {
     setupConfigListeners() {
         // Listen for external config changes to update UI
         const sliderKeys = [
-            'nodeCount', 'connectionDensity', 'orbitSpeed', 
-            'focusDuration', 'transitionSpeed', 'orbitDistance',
+            'nodeCount', 'connectionDensity',
             'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps'
         ];
 
@@ -134,26 +115,6 @@ export class ControlsManager {
         }
     }
 
-    /**
-     * Update orbit button state
-     * @param {boolean} isActive - Whether orbit is active
-     */
-    updateOrbitButton(isActive) {
-        const button = this.elements.get('toggleOrbit');
-        const status = document.getElementById('orbitStatus');
-        
-        if (button && status) {
-            if (isActive) {
-                button.textContent = 'Stop Auto-Orbit';
-                button.insertBefore(status, button.firstChild);
-                status.className = 'status-indicator status-active';
-            } else {
-                button.textContent = 'Start Auto-Orbit';
-                button.insertBefore(status, button.firstChild);
-                status.className = 'status-indicator status-inactive';
-            }
-        }
-    }
 
     /**
      * Set callback for control events

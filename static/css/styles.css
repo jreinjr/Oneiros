@@ -277,36 +277,6 @@ button:disabled {
     cursor: not-allowed;
 }
 
-.status-indicator {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 8px;
-}
-
-.status-active {
-    background: #4CAF50;
-    animation: pulse 2s infinite;
-}
-
-.theme-truth .status-active {
-    background: #2196F3;
-}
-
-.theme-love .status-active {
-    background: #F44336;
-}
-
-.status-inactive {
-    background: #666;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
 
 #poetry-log {
     position: absolute;

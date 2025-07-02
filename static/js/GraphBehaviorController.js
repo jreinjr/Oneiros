@@ -1,13 +1,12 @@
 /**
  * Graph Behavior Controller
- * Main orchestrator that coordinates all graph behaviors and UI components
+ * Main orchestrator that coordinates graph visualization and UI components
  */
 
 import { config, THEME_COLORS } from './config.js';
 import { generateGraph } from './graph/generator.js';
 import { fetchBeliefGraph } from './graph/neo4j-connector.js';
 import { GraphVisualizer } from './graph/visualizer.js';
-import { OrbitBehavior } from './graph/behaviors/orbit.js';
 import { ControlsManager } from './ui/controls.js';
 import { PopupManager } from './ui/popup.js';
 import { LoggerManager } from './ui/logger.js';
@@ -20,7 +19,6 @@ export class GraphBehaviorController {
         // Core components
         this.config = config;
         this.visualizer = null;
-        this.orbitBehavior = null;
         
         // UI components
         this.controls = null;
@@ -42,9 +40,6 @@ export class GraphBehaviorController {
             // Initialize visualizer
             this.visualizer = new GraphVisualizer('3d-graph', this.config);
             
-            // Initialize behaviors
-            this.orbitBehavior = new OrbitBehavior(this.visualizer, this.config);
-            
             // Initialize UI components
             this.controls = new ControlsManager(this.config);
             this.popup = new PopupManager(this.visualizer);
@@ -59,13 +54,6 @@ export class GraphBehaviorController {
             // Generate initial graph
             this.generateGraph();
             
-            // Auto-focus on a random node after graph stabilizes
-            setTimeout(() => {
-                if (!this.currentNode) {
-                    this.focusOnRandomNode();
-                }
-            }, 2000);
-            
             console.log('Graph Behavior Controller initialized successfully');
         } catch (error) {
             console.error('Failed to initialize Graph Behavior Controller:', error);
@@ -79,11 +67,6 @@ export class GraphBehaviorController {
         // Visualizer events
         this.visualizer.setNodeClickCallback((node, event) => {
             this.handleNodeClick(node, event);
-        });
-
-        // Orbit behavior events
-        this.orbitBehavior.setNodeChangeCallback((newNode, previousNode) => {
-            this.handleNodeChange(newNode, previousNode);
         });
 
         // Control events
@@ -149,31 +132,15 @@ export class GraphBehaviorController {
     setupControlCallbacks() {
         // Graph regeneration (random)
         this.controls.setCallback('regenerateGraph', () => {
-            this.orbitBehavior.stop();
             this.generateGraph();
         });
 
         // Belief graph generation
         this.controls.setCallback('generateBeliefGraph', () => {
-            this.orbitBehavior.stop();
             this.generateBeliefGraph();
         });
 
-        // Orbit toggle
-        this.controls.setCallback('toggleOrbit', () => {
-            this.toggleOrbit();
-        });
-
-        // Camera reset
-        this.controls.setCallback('resetCamera', () => {
-            this.resetCamera();
-        });
-
         // Configuration changes that need immediate response
-        this.controls.setCallback('orbitDistance', (controlId, value) => {
-            this.orbitBehavior.updateConfig(controlId, value);
-        });
-
         this.controls.setCallback('nodeSize', (controlId, value) => {
             this.visualizer.updateConfig(controlId, value);
         });
@@ -198,14 +165,6 @@ export class GraphBehaviorController {
      * Set up configuration change listeners
      */
     setupConfigurationListeners() {
-        // Listen for configuration changes that affect behaviors
-        const behaviorKeys = ['orbitSpeed', 'focusDuration', 'transitionSpeed', 'orbitDistance'];
-        behaviorKeys.forEach(key => {
-            this.config.addListener(key, (configKey, newValue) => {
-                this.orbitBehavior.updateConfig(configKey, newValue);
-            });
-        });
-
         // Listen for configuration changes that affect visualization
         const visualKeys = ['nodeSize', 'nodeDistance', 'connectionThickness'];
         visualKeys.forEach(key => {
@@ -256,12 +215,6 @@ export class GraphBehaviorController {
             
             console.log(`Loaded belief graph with ${this.graphData.nodes.length} quotes and ${this.graphData.links.length} SAME_AUTHOR relationships (filtered by ${tagFilter})`);
             
-            // Auto-focus on a random node after graph stabilizes
-            setTimeout(() => {
-                if (!this.currentNode) {
-                    this.focusOnRandomNode();
-                }
-            }, 2000);
         } catch (error) {
             console.error('Failed to load belief graph:', error);
             alert('Failed to connect to Neo4j database. Please ensure Neo4j is running and the credentials are correct.');
@@ -274,54 +227,22 @@ export class GraphBehaviorController {
      * @param {Event} event - Mouse event
      */
     handleNodeClick(node, event) {
-        this.focusOnNode(node, true);
-    }
-
-    /**
-     * Handle node change events from orbit behavior
-     * @param {Object} newNode - New focused node
-     * @param {Object} previousNode - Previously focused node
-     */
-    handleNodeChange(newNode, previousNode) {
-        this.currentNode = newNode;
-        this.updateHighlights();
-        this.popup.show(newNode);
-        // Only log if it's a different node
-        if (!previousNode || previousNode.id !== newNode.id) {
-            this.logNodeConnection(newNode);
-        }
+        this.focusOnNode(node);
     }
 
     /**
      * Focus on a specific node
      * @param {Object} node - Node to focus on
-     * @param {boolean} userTriggered - Whether this was user-triggered
      */
-    focusOnNode(node, userTriggered = false) {
-        if (userTriggered) {
-            this.orbitBehavior.stop();
-            this.controls.updateOrbitButton(false);
-        }
-
+    focusOnNode(node) {
         const previousNode = this.currentNode;
         this.currentNode = node;
-        this.orbitBehavior.focusOnNode(node, userTriggered);
         this.updateHighlights();
         this.popup.show(node);
         
         // Only log if it's a different node
         if (!previousNode || previousNode.id !== node.id) {
             this.logNodeConnection(node);
-        }
-    }
-
-    /**
-     * Focus on a random node
-     */
-    focusOnRandomNode() {
-        if (this.graphData.nodes.length > 0) {
-            const randomNode = this.graphData.nodes[Math.floor(Math.random() * this.graphData.nodes.length)];
-            this.focusOnNode(randomNode, false);
         }
     }
 
@@ -358,32 +279,6 @@ export class GraphBehaviorController {
     }
 
     /**
-     * Toggle orbit behavior
-     */
-    toggleOrbit() {
-        if (this.orbitBehavior.isOrbitActive()) {
-            this.orbitBehavior.stop();
-            this.controls.updateOrbitButton(false);
-        } else {
-            this.orbitBehavior.start(this.currentNode);
-            this.controls.updateOrbitButton(true);
-        }
-    }
-
-    /**
-     * Reset camera to default view
-     */
-    resetCamera() {
-        this.orbitBehavior.stop();
-        this.controls.updateOrbitButton(false);
-        this.visualizer.zoomToFit(2000);
-        this.currentNode = null;
-        this.visualizer.clearSelection();
-        this.popup.hide();
-        this.popup.resetPosition();
-    }
-
-    /**
      * Get current application state
      * @returns {Object} Current state
      */
@@ -391,7 +286,6 @@ export class GraphBehaviorController {
         return {
             graphData: this.graphData,
             currentNode: this.currentNode,
-            orbitState: this.orbitBehavior.getState(),
             configuration: this.config.getAll()
         };
     }
@@ -411,7 +305,7 @@ export class GraphBehaviorController {
         }
 
         if (state.currentNode) {
-            this.focusOnNode(state.currentNode, false);
+            this.focusOnNode(state.currentNode);
         }
     }
 
@@ -459,8 +353,7 @@ export class GraphBehaviorController {
             nodeCount,
             linkCount,
             density: Math.round(density * 1000) / 1000,
-            currentNode: this.currentNode?.id || null,
-            orbitActive: this.orbitBehavior.isOrbitActive()
+            currentNode: this.currentNode?.id || null
         };
     }
 
@@ -503,11 +396,6 @@ export class GraphBehaviorController {
      * Dispose of the controller and clean up all resources
      */
     dispose() {
-        // Stop all behaviors
-        if (this.orbitBehavior) {
-            this.orbitBehavior.dispose();
-        }
-
         // Dispose UI components
         if (this.controls) {
             this.controls.dispose();
@@ -537,7 +425,6 @@ export class GraphBehaviorController {
         // Clear references
         this.config = null;
         this.visualizer = null;
-        this.orbitBehavior = null;
         this.controls = null;
         this.popup = null;
         this.logger = null;

@@ -14,11 +14,6 @@ export const DEFAULT_CONFIG = {
     connectionThickness: 1,
     highlightSteps: 1,
     
-    // Orbit Behavior
-    orbitSpeed: 0.1,
-    focusDuration: 8,
-    transitionSpeed: 2000,
-    orbitDistance: 120,
     
     // Theme
     currentTheme: 'beauty',
@@ -68,11 +63,7 @@ export const CONFIG_LIMITS = {
     nodeSize: { min: 1, max: 10, step: 0.5 },
     nodeDistance: { min: 50, max: 1500, step: 10 },
     connectionThickness: { min: 0.5, max: 5, step: 0.5 },
-    highlightSteps: { min: 0, max: 5, step: 1 },
-    orbitSpeed: { min: 0.01, max: 1.0, step: 0.01 },
-    focusDuration: { min: 2, max: 20 },
-    transitionSpeed: { min: 500, max: 4000, step: 100 },
-    orbitDistance: { min: 50, max: 3000 }
+    highlightSteps: { min: 0, max: 5, step: 1 }
 };
 
 /**
