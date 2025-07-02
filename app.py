@@ -1,10 +1,12 @@
 """Flask application for BeliefGraph dynamic website"""
 
-from flask import Flask, render_template, abort
+from flask import Flask, render_template, abort, request, jsonify
 from research.database import get_session, get_all_authors, get_author_by_name, init_database
 import os
 from datetime import datetime
 import markdown2
+from collections import deque
+import threading
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -13,6 +15,10 @@ app.config['JSON_AS_ASCII'] = False  # Ensure proper Unicode handling in JSON re
 
 # Initialize database on startup
 init_database()
+
+# Message queue for the logger
+message_queue = deque(maxlen=100)  # Keep last 100 messages
+message_lock = threading.Lock()
 
 @app.route('/')
 def index():
@@ -64,11 +70,48 @@ def graph_visualization():
 @app.route('/api/neo4j-config')
 def neo4j_config():
     """Provide Neo4j configuration for client"""
-    from flask import jsonify
     return jsonify({
         'uri': os.getenv('NEO4J_URI', 'neo4j://127.0.0.1:7687'),
         'username': os.getenv('NEO4J_USERNAME', 'neo4j'),
         'password': os.getenv('NEO4J_PASSWORD', '#$ER34er')
+    })
+
+@app.route('/listen', methods=['POST'])
+def listen():
+    """Endpoint to receive strings and log them to the logger panel"""
+    try:
+        # Get the string from the request
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({'error': 'No message provided'}), 400
+        
+        message = data['message']
+        
+        # Add message to queue
+        with message_lock:
+            message_queue.append({
+                'message': message,
+                'timestamp': datetime.now().isoformat()
+            })
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Message received',
+            'received': message
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/messages', methods=['GET'])
+def get_messages():
+    """Get all pending messages from the queue"""
+    with message_lock:
+        messages = list(message_queue)
+        message_queue.clear()  # Clear the queue after reading
+    
+    return jsonify({
+        'messages': messages
     })
 
 @app.template_filter('format_years')

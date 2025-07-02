@@ -396,6 +396,25 @@ export class GraphBehaviorController {
     }
 
     /**
+     * Add a custom message to the logger
+     * @param {string} message - Message to add to the logger
+     * @param {string} type - Type of message ('info', 'warning', 'error')
+     */
+    addLogMessage(message, type = 'info') {
+        if (this.logger) {
+            this.logger.addCustomEntry(message, type);
+        }
+    }
+
+    /**
+     * Get the logger instance
+     * @returns {LoggerManager|null} Logger instance
+     */
+    getLogger() {
+        return this.logger;
+    }
+
+    /**
      * Dispose of the controller and clean up all resources
      */
     dispose() {

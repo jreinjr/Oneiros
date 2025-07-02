@@ -175,5 +175,58 @@ if (document.readyState === 'loading') {
 // Export for global access (useful for debugging)
 window.GraphApp = app;
 
+// Add global function to send messages to the logger via the /listen endpoint
+window.sendToLogger = async function(message) {
+    try {
+        const response = await fetch('/listen', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && app.isReady()) {
+            // Add the message to the logger panel
+            const controller = app.getController();
+            if (controller) {
+                controller.addLogMessage(message, 'info');
+            }
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Failed to send message to logger:', error);
+        throw error;
+    }
+};
+
+// Poll for new messages from the server
+async function pollForMessages() {
+    if (!app.isReady()) return;
+    
+    try {
+        const response = await fetch('/api/messages');
+        if (response.ok) {
+            const data = await response.json();
+            const controller = app.getController();
+            
+            if (controller && data.messages && data.messages.length > 0) {
+                // Add each message to the logger
+                data.messages.forEach(msg => {
+                    controller.addLogMessage(msg.message, 'info');
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Failed to poll for messages:', error);
+    }
+}
+
+// Start polling for messages every 2 seconds
+setInterval(pollForMessages, 2000);
+
 // Export for module usage
 export default app;
