@@ -240,6 +240,9 @@ export class GraphBehaviorController {
         this.updateHighlights();
         this.popup.show(node);
         
+        // Animate camera to focus on the node
+        this.visualizer.focusCameraOnNode(node);
+        
         // Only log if it's a different node
         if (!previousNode || previousNode.id !== node.id) {
             this.logNodeConnection(node);

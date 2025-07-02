@@ -31,7 +31,7 @@ export class GraphVisualizer {
     initialize() {
         this.graph = new ForceGraph3D(document.getElementById(this.containerId))
             .enableNodeDrag(false)
-            .enableNavigationControls(false)
+            .enableNavigationControls(true)
             .showNavInfo(false)
             .nodeLabel('id')
             .nodeColor(node => this.getNodeColor(node))
@@ -315,6 +315,35 @@ export class GraphVisualizer {
      */
     getGraphInstance() {
         return this.graph;
+    }
+
+    /**
+     * Focus camera on a specific node with smooth animation
+     * @param {Object} node - Node to focus on
+     * @param {number} distance - Distance from node (optional, uses config if not provided)
+     * @param {number} duration - Animation duration in ms (optional, uses config if not provided)
+     */
+    focusCameraOnNode(node, distance = null, duration = null) {
+        if (!node || !this.graph) return;
+
+        // Use config values if not provided
+        const cameraDistance = distance || this.config.get('cameraDistance');
+        const animationDuration = duration || this.config.get('cameraAnimationDuration');
+
+        // Calculate the distance ratio to position camera outside the node
+        const distRatio = 1 + cameraDistance / Math.hypot(node.x, node.y, node.z);
+
+        // Calculate new camera position
+        const newPos = node.x || node.y || node.z
+            ? { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }
+            : { x: 0, y: 0, z: cameraDistance }; // Special case if node is at origin (0,0,0)
+
+        // Animate camera to new position, looking at the node
+        this.graph.cameraPosition(
+            newPos, // new position
+            node,   // lookAt ({ x, y, z })
+            animationDuration // ms transition duration
+        );
     }
 
     /**

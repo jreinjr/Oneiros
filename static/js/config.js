@@ -14,6 +14,9 @@ export const DEFAULT_CONFIG = {
     connectionThickness: 1,
     highlightSteps: 1,
     
+    // Camera Animation
+    cameraDistance: 40,
+    cameraAnimationDuration: 3000,
     
     // Theme
     currentTheme: 'beauty',
@@ -63,7 +66,9 @@ export const CONFIG_LIMITS = {
     nodeSize: { min: 1, max: 10, step: 0.5 },
     nodeDistance: { min: 50, max: 1500, step: 10 },
     connectionThickness: { min: 0.5, max: 5, step: 0.5 },
-    highlightSteps: { min: 0, max: 5, step: 1 }
+    highlightSteps: { min: 0, max: 5, step: 1 },
+    cameraDistance: { min: 20, max: 200, step: 10 },
+    cameraAnimationDuration: { min: 500, max: 5000, step: 500 }
 };
 
 /**
