@@ -29,7 +29,12 @@ export const DEFAULT_CONFIG = {
         highlightedLink: 'rgba(255, 255, 255, 0.8)',
         defaultLink: '#666',
         ui: '#4CAF50'
-    }
+    },
+    
+    // Logger Settings
+    aiEnhancedLogging: true,  // Default to AI-enhanced logging
+    ollamaEndpoint: 'http://127.0.0.1:11434',
+    ollamaModel: 'llama3.2:3b'
 };
 
 // Theme color configurations

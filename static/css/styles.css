@@ -277,6 +277,41 @@ button:disabled {
     cursor: not-allowed;
 }
 
+/* Checkbox styling */
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    cursor: pointer;
+    vertical-align: middle;
+    accent-color: #4CAF50;
+}
+
+.theme-truth input[type="checkbox"] {
+    accent-color: #2196F3;
+}
+
+.theme-love input[type="checkbox"] {
+    accent-color: #F44336;
+}
+
+.control-item label[for] {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.control-description {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    margin-left: 26px;
+    line-height: 1.4;
+}
+
 
 #poetry-log {
     position: absolute;

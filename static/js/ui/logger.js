@@ -39,14 +39,24 @@ export class LoggerManager {
      * @param {Object} node - Node that was focused
      * @param {Map} nodesMap - Map of distance to nodes (from getNodesWithinSteps)
      */
-    addEntry(node, nodesMap = null) {
+    async addEntry(node, nodesMap = null) {
         if (!node) return;
         
         const highlightSteps = this.config.get('highlightSteps');
         const connectionString = this.formatConnectionString(node, nodesMap || new Map(), highlightSteps);
         
-        // Add to beginning of entries array
-        this.entries.unshift(connectionString);
+        // Check if AI-enhanced logging is enabled
+        if (this.config.get('aiEnhancedLogging')) {
+            try {
+                const enhancedString = await this.enhanceWithAI(connectionString);
+                this.entries.unshift(enhancedString);
+            } catch (error) {
+                console.error('AI enhancement failed, using original message:', error);
+                this.entries.unshift(connectionString);
+            }
+        } else {
+            this.entries.unshift(connectionString);
+        }
         
         // Keep only maxEntries
         if (this.entries.length > this.maxEntries) {
@@ -167,8 +177,19 @@ export class LoggerManager {
      * @param {string} message - Custom message to log
      * @param {string} type - Entry type ('info', 'warning', 'error')
      */
-    addCustomEntry(message, type = 'info') {
-        this.entries.unshift(message);
+    async addCustomEntry(message, type = 'info') {
+        // Check if AI-enhanced logging is enabled
+        if (this.config.get('aiEnhancedLogging')) {
+            try {
+                const enhancedMessage = await this.enhanceWithAI(message);
+                this.entries.unshift(enhancedMessage);
+            } catch (error) {
+                console.error('AI enhancement failed, using original message:', error);
+                this.entries.unshift(message);
+            }
+        } else {
+            this.entries.unshift(message);
+        }
         
         // Keep only maxEntries
         if (this.entries.length > this.maxEntries) {
@@ -435,6 +456,60 @@ export class LoggerManager {
         
         // Start typing after a short delay
         setTimeout(typeNextChar, 500);
+    }
+    
+    /**
+     * Enhance log message with AI
+     * @param {string} message - Original message
+     * @returns {Promise<string>} Enhanced message
+     */
+    async enhanceWithAI(message) {
+        const endpoint = this.config.get('ollamaEndpoint');
+        const model = this.config.get('ollamaModel');
+        
+        try {
+            const response = await fetch(`${endpoint}/api/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: model,
+                    prompt: `Transform this technical log message into a poetic or philosophical statement. Keep it concise (under 100 characters). Original message: "${message}"`,
+                    stream: false,
+                    options: {
+                        temperature: 0.8,
+                        max_tokens: 50
+                    }
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Ollama API error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data.response || message;
+        } catch (error) {
+            console.error('Failed to enhance message with AI:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Toggle AI-enhanced logging
+     * @param {boolean} enabled - Whether to enable AI enhancement
+     */
+    setAIEnhancedLogging(enabled) {
+        this.config.set('aiEnhancedLogging', enabled);
+    }
+    
+    /**
+     * Check if AI-enhanced logging is enabled
+     * @returns {boolean} Whether AI enhancement is enabled
+     */
+    isAIEnhancedLoggingEnabled() {
+        return this.config.get('aiEnhancedLogging');
     }
     
     /**

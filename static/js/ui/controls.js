@@ -83,6 +83,21 @@ export class ControlsManager {
             });
         }
 
+        // AI-Enhanced Logging checkbox
+        const aiLoggingCheckbox = document.getElementById('aiEnhancedLogging');
+        if (aiLoggingCheckbox) {
+            this.elements.set('aiEnhancedLogging', aiLoggingCheckbox);
+            
+            // Set initial state from config
+            aiLoggingCheckbox.checked = this.config.get('aiEnhancedLogging');
+            
+            // Add event listener
+            aiLoggingCheckbox.addEventListener('change', (e) => {
+                const enabled = e.target.checked;
+                this.config.set('aiEnhancedLogging', enabled);
+                this.triggerCallback('aiEnhancedLogging', enabled);
+            });
+        }
     }
 
     /**
