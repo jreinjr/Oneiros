@@ -21,6 +21,8 @@ export class ControlsManager {
     initialize() {
         this.setupSliders();
         this.setupButtons();
+        this.setupColorControls();
+        this.setupProcessingModeControls();
         this.setupConfigListeners();
     }
 
@@ -84,21 +86,261 @@ export class ControlsManager {
             });
         }
 
-        // AI-Enhanced Logging checkbox
-        const aiLoggingCheckbox = document.getElementById('aiEnhancedLogging');
-        if (aiLoggingCheckbox) {
-            this.elements.set('aiEnhancedLogging', aiLoggingCheckbox);
-            
-            // Set initial state from config
-            aiLoggingCheckbox.checked = this.config.get('aiEnhancedLogging');
-            
-            // Add event listener
-            aiLoggingCheckbox.addEventListener('change', (e) => {
-                const enabled = e.target.checked;
-                this.config.set('aiEnhancedLogging', enabled);
-                this.triggerCallback('aiEnhancedLogging', enabled);
+
+        // Save Palette button
+        const savePaletteBtn = document.getElementById('savePalette');
+        if (savePaletteBtn) {
+            this.elements.set('savePalette', savePaletteBtn);
+            savePaletteBtn.addEventListener('click', () => {
+                this.triggerCallback('savePalette');
             });
         }
+
+        // Reset Palette button
+        const resetPaletteBtn = document.getElementById('resetPalette');
+        if (resetPaletteBtn) {
+            this.elements.set('resetPalette', resetPaletteBtn);
+            resetPaletteBtn.addEventListener('click', () => {
+                this.triggerCallback('resetPalette');
+            });
+        }
+    }
+
+    /**
+     * Setup color control inputs
+     */
+    setupColorControls() {
+        const colorInputs = [
+            'selectedNodeColor', 'highlightedNodeColor', 'defaultNodeColor',
+            'highlightedLinkColor', 'defaultLinkColor', 'graphBackgroundColor',
+            'popupPrimaryColor', 'popupSecondaryColor', 'popupBackgroundColor',
+            'logPrimaryColor', 'logSecondaryColor', 'logBackgroundColor'
+        ];
+
+        colorInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (!input) {
+                console.warn(`Color input not found: ${inputId}`);
+                return;
+            }
+
+            this.elements.set(inputId, input);
+            
+            // Set initial color from config
+            const colorKey = this.getColorKeyFromInputId(inputId);
+            const currentColor = this.config.get(`colors.${colorKey}`);
+            if (currentColor) {
+                // Convert rgba to hex for color input
+                input.value = this.convertColorToHex(currentColor);
+            }
+            
+            // Add event listener
+            input.addEventListener('input', (e) => {
+                const colorValue = e.target.value;
+                this.updateColor(colorKey, colorValue);
+            });
+        });
+    }
+
+    /**
+     * Convert color input ID to config color key
+     * @param {string} inputId - Input element ID
+     * @returns {string} Color key for config
+     */
+    getColorKeyFromInputId(inputId) {
+        const mapping = {
+            'selectedNodeColor': 'selectedNode',
+            'highlightedNodeColor': 'highlightedNode',
+            'defaultNodeColor': 'defaultNode',
+            'highlightedLinkColor': 'highlightedLink',
+            'defaultLinkColor': 'defaultLink',
+            'graphBackgroundColor': 'graphBackground',
+            'popupPrimaryColor': 'popupPrimary',
+            'popupSecondaryColor': 'popupSecondary',
+            'popupBackgroundColor': 'popupBackground',
+            'logPrimaryColor': 'logPrimary',
+            'logSecondaryColor': 'logSecondary',
+            'logBackgroundColor': 'logBackground'
+        };
+        return mapping[inputId] || inputId;
+    }
+
+    /**
+     * Convert color value to hex format
+     * @param {string} color - Color in any format
+     * @returns {string} Hex color
+     */
+    convertColorToHex(color) {
+        if (color.startsWith('#')) {
+            return color;
+        }
+        
+        // Handle rgba colors
+        if (color.startsWith('rgba')) {
+            const values = color.match(/rgba?\(([^)]+)\)/)[1].split(',').map(v => parseFloat(v.trim()));
+            const r = Math.round(values[0]).toString(16).padStart(2, '0');
+            const g = Math.round(values[1]).toString(16).padStart(2, '0');
+            const b = Math.round(values[2]).toString(16).padStart(2, '0');
+            return `#${r}${g}${b}`;
+        }
+        
+        // Handle rgb colors
+        if (color.startsWith('rgb')) {
+            const values = color.match(/rgb?\(([^)]+)\)/)[1].split(',').map(v => parseInt(v.trim()));
+            const r = values[0].toString(16).padStart(2, '0');
+            const g = values[1].toString(16).padStart(2, '0');
+            const b = values[2].toString(16).padStart(2, '0');
+            return `#${r}${g}${b}`;
+        }
+        
+        return color;
+    }
+
+    /**
+     * Update color in configuration
+     * @param {string} colorKey - Color key
+     * @param {string} colorValue - New color value
+     */
+    updateColor(colorKey, colorValue) {
+        const currentColors = this.config.get('colors');
+        const newColors = { ...currentColors };
+        
+        // Special handling for colors that might need alpha
+        if (colorKey === 'highlightedNode' || colorKey === 'highlightedLink') {
+            // Convert to rgba with alpha
+            const hex = colorValue;
+            const r = parseInt(hex.substr(1, 2), 16);
+            const g = parseInt(hex.substr(3, 2), 16);
+            const b = parseInt(hex.substr(5, 2), 16);
+            newColors[colorKey] = `rgba(${r}, ${g}, ${b}, 0.8)`;
+        } else if (colorKey.includes('Background') && colorKey !== 'graphBackground') {
+            // Convert to rgba with alpha for backgrounds
+            const hex = colorValue;
+            const r = parseInt(hex.substr(1, 2), 16);
+            const g = parseInt(hex.substr(3, 2), 16);
+            const b = parseInt(hex.substr(5, 2), 16);
+            const alpha = colorKey === 'popupBackground' ? 0.9 : 0.8;
+            newColors[colorKey] = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        } else {
+            newColors[colorKey] = colorValue;
+        }
+        
+        this.config.set('colors', newColors);
+        this.triggerCallback('colorChanged', { colorKey, colorValue });
+    }
+
+    /**
+     * Update color controls to match current theme
+     */
+    updateColorControlsFromConfig() {
+        const colorInputs = [
+            'selectedNodeColor', 'highlightedNodeColor', 'defaultNodeColor',
+            'highlightedLinkColor', 'defaultLinkColor', 'graphBackgroundColor',
+            'popupPrimaryColor', 'popupSecondaryColor', 'popupBackgroundColor',
+            'logPrimaryColor', 'logSecondaryColor', 'logBackgroundColor'
+        ];
+
+        colorInputs.forEach(inputId => {
+            const input = this.elements.get(inputId);
+            if (input) {
+                const colorKey = this.getColorKeyFromInputId(inputId);
+                const currentColor = this.config.get(`colors.${colorKey}`);
+                if (currentColor) {
+                    input.value = this.convertColorToHex(currentColor);
+                }
+            }
+        });
+    }
+
+    /**
+     * Setup processing mode controls
+     */
+    setupProcessingModeControls() {
+        // Setup user response mode controls
+        const userModeButtons = document.querySelectorAll('.user-response-mode .mode-btn');
+        if (userModeButtons.length > 0) {
+            this.elements.set('userResponseModeButtons', userModeButtons);
+            
+            // Set initial active state
+            const currentUserMode = this.config.get('userResponseMode') || 'echo';
+            userModeButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === currentUserMode);
+                btn.addEventListener('click', () => {
+                    this.setUserResponseMode(btn.dataset.mode);
+                });
+            });
+        }
+
+        // Setup screen text mode controls
+        const screenModeButtons = document.querySelectorAll('.screen-text-mode .mode-btn');
+        if (screenModeButtons.length > 0) {
+            this.elements.set('screenTextModeButtons', screenModeButtons);
+            
+            // Set initial active state
+            const currentScreenMode = this.config.get('screenTextMode') || 'echo';
+            screenModeButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === currentScreenMode);
+                btn.addEventListener('click', () => {
+                    this.setScreenTextMode(btn.dataset.mode);
+                });
+            });
+        }
+    }
+
+    /**
+     * Set user response mode
+     * @param {string} mode - Processing mode (echo, llm, quote, rag)
+     */
+    setUserResponseMode(mode) {
+        // Update config
+        this.config.set('userResponseMode', mode);
+        
+        // Update UI
+        const buttons = this.elements.get('userResponseModeButtons');
+        if (buttons) {
+            buttons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+        }
+        
+        // Trigger callback
+        this.triggerCallback('userResponseModeChanged', mode);
+    }
+
+    /**
+     * Set screen text mode
+     * @param {string} mode - Processing mode (echo, llm, quote, rag)
+     */
+    setScreenTextMode(mode) {
+        // Update config
+        this.config.set('screenTextMode', mode);
+        
+        // Update UI
+        const buttons = this.elements.get('screenTextModeButtons');
+        if (buttons) {
+            buttons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+        }
+        
+        // Trigger callback
+        this.triggerCallback('screenTextModeChanged', mode);
+    }
+
+    /**
+     * Get current user response mode
+     * @returns {string} Current mode
+     */
+    getUserResponseMode() {
+        return this.config.get('userResponseMode') || 'echo';
+    }
+
+    /**
+     * Get current screen text mode
+     * @returns {string} Current mode
+     */
+    getScreenTextMode() {
+        return this.config.get('screenTextMode') || 'echo';
     }
 
     /**

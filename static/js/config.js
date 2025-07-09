@@ -31,38 +31,79 @@ export const DEFAULT_CONFIG = {
         ui: '#4CAF50'
     },
     
+    // Message Processing Settings
+    userResponseMode: 'echo',  // echo, llm, quote, rag
+    screenTextMode: 'echo',    // echo, llm, quote, rag
+    processingModes: ['echo', 'llm', 'quote', 'rag'],
+    
     // Logger Settings
-    aiEnhancedLogging: true,  // Default to AI-enhanced logging
-    ollamaEndpoint: 'http://127.0.0.1:11434',
-    ollamaModel: 'llama3.2:3b',
     messageDuration: 5,  // seconds
     typingSpeed: 33  // characters per second
 };
 
-// Theme color configurations
+// Theme color configurations with expanded palette
 export const THEME_COLORS = {
     truth: {
+        // Node colors
         selectedNode: '#ffffff',
         highlightedNode: 'rgba(255, 255, 255, 0.8)',
         defaultNode: '#2196F3',
+        // Connection colors
         highlightedLink: 'rgba(255, 255, 255, 0.8)',
         defaultLink: '#666',
+        // Graph background
+        graphBackground: '#000000',
+        // Popup colors
+        popupPrimary: '#2196F3',
+        popupSecondary: '#1976D2',
+        popupBackground: 'rgba(0, 0, 0, 0.9)',
+        // Log colors
+        logPrimary: '#2196F3',
+        logSecondary: '#1976D2',
+        logBackground: 'rgba(0, 0, 0, 0.8)',
+        // Legacy UI color for backward compatibility
         ui: '#2196F3'
     },
     beauty: {
+        // Node colors
         selectedNode: '#ffffff',
         highlightedNode: 'rgba(255, 255, 255, 0.8)',
         defaultNode: '#4CAF50',
+        // Connection colors
         highlightedLink: 'rgba(255, 255, 255, 0.8)',
         defaultLink: '#666',
+        // Graph background
+        graphBackground: '#000000',
+        // Popup colors
+        popupPrimary: '#4CAF50',
+        popupSecondary: '#388E3C',
+        popupBackground: 'rgba(0, 0, 0, 0.9)',
+        // Log colors
+        logPrimary: '#4CAF50',
+        logSecondary: '#388E3C',
+        logBackground: 'rgba(0, 0, 0, 0.8)',
+        // Legacy UI color for backward compatibility
         ui: '#4CAF50'
     },
     love: {
+        // Node colors
         selectedNode: '#ffffff',
         highlightedNode: 'rgba(255, 255, 255, 0.8)',
         defaultNode: '#F44336',
+        // Connection colors
         highlightedLink: 'rgba(255, 255, 255, 0.8)',
         defaultLink: '#666',
+        // Graph background
+        graphBackground: '#000000',
+        // Popup colors
+        popupPrimary: '#F44336',
+        popupSecondary: '#D32F2F',
+        popupBackground: 'rgba(0, 0, 0, 0.9)',
+        // Log colors
+        logPrimary: '#F44336',
+        logSecondary: '#D32F2F',
+        logBackground: 'rgba(0, 0, 0, 0.8)',
+        // Legacy UI color for backward compatibility
         ui: '#F44336'
     }
 };
@@ -76,6 +117,22 @@ export const CONFIG_LIMITS = {
     highlightSteps: { min: 0, max: 5, step: 1 },
     cameraDistance: { min: 20, max: 200, step: 10 },
     cameraAnimationDuration: { min: 500, max: 5000, step: 500 }
+};
+
+// Color component definitions for UI
+export const COLOR_COMPONENTS = {
+    selectedNode: 'Selected Node',
+    highlightedNode: 'Highlighted Node', 
+    defaultNode: 'Default Node',
+    highlightedLink: 'Highlighted Connection',
+    defaultLink: 'Default Connection',
+    graphBackground: 'Graph Background',
+    popupPrimary: 'Popup Primary',
+    popupSecondary: 'Popup Secondary',
+    popupBackground: 'Popup Background',
+    logPrimary: 'Log Primary',
+    logSecondary: 'Log Secondary',
+    logBackground: 'Log Background'
 };
 
 /**
@@ -154,6 +211,59 @@ export class ConfigManager {
                 if (oldConfig[key] !== this.config[key]) {
                     this._notifyListeners(key, this.config[key]);
                 }
+            }
+        }
+    }
+
+    /**
+     * Save current theme colors to localStorage
+     * @param {string} theme - Theme name to save
+     */
+    saveThemeColors(theme) {
+        const currentColors = this.get('colors');
+        const savedPalettes = this.getSavedPalettes();
+        savedPalettes[theme] = { ...currentColors };
+        localStorage.setItem('oneiros_saved_palettes', JSON.stringify(savedPalettes));
+    }
+
+    /**
+     * Load saved theme colors from localStorage
+     * @param {string} theme - Theme name to load
+     * @returns {Object|null} Saved colors or null if not found
+     */
+    loadThemeColors(theme) {
+        const savedPalettes = this.getSavedPalettes();
+        return savedPalettes[theme] || null;
+    }
+
+    /**
+     * Get all saved palettes from localStorage
+     * @returns {Object} Saved palettes object
+     */
+    getSavedPalettes() {
+        try {
+            const saved = localStorage.getItem('oneiros_saved_palettes');
+            return saved ? JSON.parse(saved) : {};
+        } catch (error) {
+            console.error('Error loading saved palettes:', error);
+            return {};
+        }
+    }
+
+    /**
+     * Apply saved colors to current theme if they exist
+     * @param {string} theme - Theme name to apply
+     */
+    applySavedColors(theme) {
+        const savedColors = this.loadThemeColors(theme);
+        if (savedColors) {
+            this.set('colors', savedColors);
+            console.log(`Applied saved colors for theme: ${theme}`);
+        } else {
+            // Use default theme colors
+            const defaultColors = THEME_COLORS[theme];
+            if (defaultColors) {
+                this.set('colors', defaultColors);
             }
         }
     }

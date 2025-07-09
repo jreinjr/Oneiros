@@ -54,6 +54,11 @@ export class GraphBehaviorController {
             // Generate initial graph
             this.generateGraph();
             
+            // Initialize colors
+            this.updateBackgroundColor();
+            this.updatePopupColors();
+            this.updateLogColors();
+            
             console.log('Graph Behavior Controller initialized successfully');
         } catch (error) {
             console.error('Failed to initialize Graph Behavior Controller:', error);
@@ -113,17 +118,18 @@ export class GraphBehaviorController {
         // Update config
         this.config.set('currentTheme', theme);
         
-        // Update colors
-        const themeColors = THEME_COLORS[theme];
-        if (themeColors) {
-            this.config.set('colors', themeColors);
-        }
+        // Apply saved colors or default colors
+        this.config.applySavedColors(theme);
         
         // Update body class for CSS styling
         document.body.className = `theme-${theme}`;
         
+        // Update color controls to match new theme
+        this.controls.updateColorControlsFromConfig();
+        
         // Refresh visuals
         this.visualizer.refreshVisuals();
+        this.updateBackgroundColor();
     }
 
     /**
@@ -160,10 +166,6 @@ export class GraphBehaviorController {
             }
         });
 
-        // Logger settings
-        this.controls.setCallback('aiEnhancedLogging', (controlId, value) => {
-            this.logger.setAIEnhancedLogging(value);
-        });
 
         this.controls.setCallback('messageDuration', (controlId, value) => {
             this.logger.setMessageDuration(value);
@@ -171,6 +173,28 @@ export class GraphBehaviorController {
 
         this.controls.setCallback('typingSpeed', (controlId, value) => {
             this.logger.setTypingSpeed(value);
+        });
+
+        // Message processing mode callbacks
+        this.controls.setCallback('userResponseModeChanged', (controlId, value) => {
+            this.handleProcessingModeChange('user', value);
+        });
+
+        this.controls.setCallback('screenTextModeChanged', (controlId, value) => {
+            this.handleProcessingModeChange('screen', value);
+        });
+
+        // Color control callbacks
+        this.controls.setCallback('colorChanged', (controlId, data) => {
+            this.handleColorChange(data.colorKey, data.colorValue);
+        });
+
+        this.controls.setCallback('savePalette', () => {
+            this.savePalette();
+        });
+
+        this.controls.setCallback('resetPalette', () => {
+            this.resetPalette();
         });
     }
 
@@ -292,6 +316,175 @@ export class GraphBehaviorController {
             const nodesMap = this.visualizer.getNodesWithinSteps(node, highlightSteps);
             this.logger.addEntry(node, nodesMap);
         }
+    }
+
+    /**
+     * Handle color change from color controls
+     * @param {string} colorKey - Color key that changed
+     * @param {string} colorValue - New color value
+     */
+    handleColorChange(colorKey, colorValue) {
+        // Refresh visuals for node and link colors
+        if (colorKey.includes('Node') || colorKey.includes('Link')) {
+            this.visualizer.refreshVisuals();
+        }
+        
+        // Update background color
+        if (colorKey === 'graphBackground') {
+            this.updateBackgroundColor();
+        }
+        
+        // Update popup colors
+        if (colorKey.includes('popup')) {
+            this.updatePopupColors();
+        }
+        
+        // Update log colors
+        if (colorKey.includes('log')) {
+            this.updateLogColors();
+        }
+    }
+
+    /**
+     * Save current palette to localStorage
+     */
+    savePalette() {
+        const currentTheme = this.config.get('currentTheme');
+        this.config.saveThemeColors(currentTheme);
+        console.log(`Saved palette for theme: ${currentTheme}`);
+        
+        // Visual feedback
+        this.logger.addCustomEntry(`Saved ${currentTheme} palette`, 'info');
+    }
+
+    /**
+     * Reset palette to default colors
+     */
+    resetPalette() {
+        const currentTheme = this.config.get('currentTheme');
+        const defaultColors = THEME_COLORS[currentTheme];
+        if (defaultColors) {
+            this.config.set('colors', defaultColors);
+            this.controls.updateColorControlsFromConfig();
+            this.visualizer.refreshVisuals();
+            this.updateBackgroundColor();
+            this.updatePopupColors();
+            this.updateLogColors();
+            
+            console.log(`Reset palette for theme: ${currentTheme}`);
+            this.logger.addCustomEntry(`Reset ${currentTheme} palette to default`, 'info');
+        }
+    }
+
+    /**
+     * Update graph background color
+     */
+    updateBackgroundColor() {
+        const backgroundColor = this.config.get('colors.graphBackground');
+        if (backgroundColor) {
+            document.body.style.backgroundColor = backgroundColor;
+            const graphContainer = document.getElementById('graph-container');
+            if (graphContainer) {
+                graphContainer.style.backgroundColor = backgroundColor;
+            }
+        }
+    }
+
+    /**
+     * Update popup colors
+     */
+    updatePopupColors() {
+        const colors = this.config.get('colors');
+        const popup = document.getElementById('node-popup');
+        if (popup && colors) {
+            popup.style.setProperty('background-color', colors.popupBackground || 'rgba(0, 0, 0, 0.9)', 'important');
+            popup.style.setProperty('border-color', colors.popupPrimary || '#4CAF50', 'important');
+            // Create rgba shadow color
+            const shadowColor = colors.popupPrimary ? this.hexToRgba(colors.popupPrimary, 0.3) : 'rgba(76, 175, 80, 0.3)';
+            popup.style.setProperty('box-shadow', `0 4px 20px ${shadowColor}`, 'important');
+            
+            const title = document.getElementById('node-popup-title');
+            if (title) {
+                title.style.setProperty('color', colors.popupPrimary || '#4CAF50', 'important');
+            }
+            
+            const name = document.getElementById('node-popup-name');
+            if (name) {
+                name.style.setProperty('color', colors.popupSecondary || '#fff', 'important');
+            }
+        }
+    }
+
+    /**
+     * Update log colors
+     */
+    updateLogColors() {
+        const colors = this.config.get('colors');
+        const logPanel = document.getElementById('poetry-log');
+        if (logPanel && colors) {
+            logPanel.style.setProperty('background-color', colors.logBackground || 'rgba(0, 0, 0, 0.8)', 'important');
+            logPanel.style.setProperty('border-color', colors.logPrimary || '#4CAF50', 'important');
+            
+            const logTitle = document.querySelector('.log-title');
+            if (logTitle) {
+                logTitle.style.setProperty('color', colors.logPrimary || '#4CAF50', 'important');
+            }
+
+            // Update log entries too
+            const logEntries = document.querySelectorAll('.log-entry');
+            const entryBackground = colors.logPrimary ? this.hexToRgba(colors.logPrimary, 0.1) : 'rgba(76, 175, 80, 0.1)';
+            logEntries.forEach(entry => {
+                entry.style.setProperty('background', entryBackground, 'important');
+                entry.style.setProperty('border-left-color', colors.logPrimary || '#4CAF50', 'important');
+            });
+        }
+    }
+
+    /**
+     * Handle processing mode change
+     * @param {string} type - Type of processing ('user' or 'screen')
+     * @param {string} mode - New mode ('echo', 'llm', 'quote', 'rag')
+     */
+    async handleProcessingModeChange(type, mode) {
+        try {
+            const settingsData = {};
+            if (type === 'user') {
+                settingsData.user_response_mode = mode;
+            } else if (type === 'screen') {
+                settingsData.screen_text_mode = mode;
+            }
+            
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settingsData)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log(`Updated ${type} processing mode to ${mode}:`, result);
+            
+        } catch (error) {
+            console.error('Error updating processing mode:', error);
+        }
+    }
+
+    /**
+     * Convert hex color to rgba
+     * @param {string} hex - Hex color
+     * @param {number} alpha - Alpha value
+     * @returns {string} RGBA color
+     */
+    hexToRgba(hex, alpha) {
+        const r = parseInt(hex.substr(1, 2), 16);
+        const g = parseInt(hex.substr(3, 2), 16);
+        const b = parseInt(hex.substr(5, 2), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
     /**

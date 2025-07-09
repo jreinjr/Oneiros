@@ -189,10 +189,12 @@ window.sendToLogger = async function(message) {
         const data = await response.json();
         
         if (response.ok && app.isReady()) {
-            // Add the message to the logger panel
             const controller = app.getController();
             if (controller) {
-                controller.addLogMessage(message, 'info');
+                // Add the processed screen text to the logger panel
+                if (data.screen_text) {
+                    controller.addLogMessage(data.screen_text, 'info');
+                }
             }
         }
         

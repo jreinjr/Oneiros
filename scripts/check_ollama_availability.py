@@ -17,14 +17,14 @@ def test_ollama_connection():
             print("✓ Ollama is running")
             print(f"  Available models: {[m['name'] for m in models]}")
             
-            # Check if llama3.2:3b is available
+            # Check if llama3.2:1b is available
             model_names = [m['name'] for m in models]
-            if 'llama3.2:3b' in model_names:
-                print("✓ llama3.2:3b model is available")
+            if 'llama3.2:1b' in model_names:
+                print("✓ llama3.2:1b model is available")
                 return True
             else:
-                print("✗ llama3.2:3b model not found")
-                print("  Please run: ollama pull llama3.2:3b")
+                print("✗ llama3.2:1b model not found")
+                print("  Please run: ollama pull llama3.2:1b")
                 return False
         else:
             print("✗ Ollama API returned error")
@@ -42,8 +42,8 @@ def transform_log_message(message):
     url = 'http://127.0.0.1:11434/api/generate'
     
     payload = {
-        'model': 'llama3.2:3b',
-        'prompt': f'Transform this technical log message into a poetic or philosophical statement. Keep it concise (under 100 characters). Original message: "{message}"',
+        'model': 'llama3.2:1b',
+        'prompt': f'Write a haiku based on this message: "{message}"',
         'stream': False,
         'options': {
             'temperature': 0.8,

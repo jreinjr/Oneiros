@@ -7,6 +7,10 @@ from datetime import datetime
 import markdown2
 from collections import deque
 import threading
+import asyncio
+import logging
+from concurrent.futures import ThreadPoolExecutor
+from message_processor import MessageProcessor
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -16,9 +20,61 @@ app.config['JSON_AS_ASCII'] = False  # Ensure proper Unicode handling in JSON re
 # Initialize database on startup
 init_database()
 
-# Message queue for the logger
+# Message queue for the logger (keeping for compatibility)
 message_queue = deque(maxlen=100)  # Keep last 100 messages
 message_lock = threading.Lock()
+
+# Initialize message processor
+message_processor_config = {
+    'ollama': {
+        'endpoint': 'http://localhost:11434',
+        'model': 'llama3.2:3b',
+        'timeout': 30,
+        'prompt_template': 'Write a haiku inspired by the following message: "{message}"',
+        'rag_prompt_template': 'Based on this quote: "{quote}" by {author}, write a haiku that relates to the user\'s message: "{message}"'
+    },
+    'neo4j': {
+        'uri': os.getenv('NEO4J_URI', 'neo4j://127.0.0.1:7687'),
+        'username': os.getenv('NEO4J_USERNAME', 'neo4j'),
+        'password': os.getenv('NEO4J_PASSWORD', '#$ER34er')
+    }
+}
+
+# Global message processor instance
+message_processor = None
+executor = ThreadPoolExecutor(max_workers=4)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def get_or_create_event_loop():
+    """Get the current event loop or create a new one"""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        return loop
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop
+
+def run_async(coro):
+    """Run async function in sync context"""
+    loop = get_or_create_event_loop()
+    return loop.run_until_complete(coro)
+
+def init_message_processor():
+    """Initialize the message processor"""
+    global message_processor
+    if message_processor is None:
+        message_processor = MessageProcessor(message_processor_config)
+        logger.info("Message processor initialized")
+
+# Initialize message processor on startup
+init_message_processor()
 
 @app.route('/')
 def index():
@@ -78,7 +134,7 @@ def neo4j_config():
 
 @app.route('/listen', methods=['POST'])
 def listen():
-    """Endpoint to receive strings and log them to the logger panel"""
+    """New endpoint to process messages through the message processor"""
     try:
         # Get the string from the request
         data = request.get_json()
@@ -87,7 +143,18 @@ def listen():
         
         message = data['message']
         
-        # Add message to queue
+        # Get optional processing mode overrides
+        user_mode = data.get('user_mode')
+        screen_mode = data.get('screen_mode')
+        
+        # Process message through the message processor
+        def process_message():
+            return run_async(message_processor.process_message(message, user_mode, screen_mode))
+        
+        # Run in thread pool to avoid blocking
+        result = executor.submit(process_message).result(timeout=30)
+        
+        # Also add to legacy queue for backward compatibility
         with message_lock:
             message_queue.append({
                 'message': message,
@@ -96,16 +163,22 @@ def listen():
         
         return jsonify({
             'status': 'success',
-            'message': 'Message received',
-            'received': message
+            'user_response': result.user_response,
+            'screen_text': result.screen_text,
+            'task_id': result.task_id,
+            'processing_info': {
+                'user_task_id': result.user_task_id,
+                'screen_task_id': result.screen_task_id
+            }
         }), 200
         
     except Exception as e:
+        logger.error(f"Error processing message: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/messages', methods=['GET'])
 def get_messages():
-    """Get all pending messages from the queue"""
+    """Get all pending messages from the queue (legacy compatibility)"""
     with message_lock:
         messages = list(message_queue)
         message_queue.clear()  # Clear the queue after reading
@@ -113,6 +186,110 @@ def get_messages():
     return jsonify({
         'messages': messages
     })
+
+@app.route('/api/settings', methods=['GET'])
+def get_settings():
+    """Get current message processing settings"""
+    try:
+        settings = message_processor.get_settings()
+        return jsonify({
+            'status': 'success',
+            'settings': settings
+        })
+    except Exception as e:
+        logger.error(f"Error getting settings: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/settings', methods=['POST'])
+def update_settings():
+    """Update message processing settings"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No settings provided'}), 400
+        
+        user_mode = data.get('user_response_mode')
+        screen_mode = data.get('screen_text_mode')
+        
+        if user_mode or screen_mode:
+            message_processor.update_settings(
+                user_mode or message_processor.get_settings()['user_response_mode'],
+                screen_mode or message_processor.get_settings()['screen_text_mode']
+            )
+        
+        return jsonify({
+            'status': 'success',
+            'settings': message_processor.get_settings()
+        })
+    except Exception as e:
+        logger.error(f"Error updating settings: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/screen-text/<task_id>', methods=['GET'])
+def get_screen_text(task_id):
+    """Get screen text result for a specific task"""
+    try:
+        def get_result():
+            return run_async(message_processor.get_task_result(task_id))
+        
+        result = executor.submit(get_result).result(timeout=5)
+        
+        if result is None:
+            return jsonify({
+                'status': 'pending',
+                'task_status': message_processor.get_task_status(task_id)
+            })
+        
+        return jsonify({
+            'status': 'completed',
+            'result': result
+        })
+    except Exception as e:
+        logger.error(f"Error getting screen text: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/processing-status/<task_id>', methods=['GET'])
+def get_processing_status(task_id):
+    """Get the processing status of a specific task"""
+    try:
+        status = message_processor.get_task_status(task_id)
+        return jsonify({
+            'status': 'success',
+            'task_status': status
+        })
+    except Exception as e:
+        logger.error(f"Error getting processing status: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/queue-info', methods=['GET'])
+def get_queue_info():
+    """Get information about the LLM processing queue"""
+    try:
+        info = message_processor.get_queue_info()
+        return jsonify({
+            'status': 'success',
+            'queue_info': info
+        })
+    except Exception as e:
+        logger.error(f"Error getting queue info: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/test-handlers', methods=['GET'])
+def test_handlers():
+    """Test all message handlers"""
+    try:
+        def test_all():
+            return run_async(message_processor.test_handlers())
+        
+        results = executor.submit(test_all).result(timeout=30)
+        
+        return jsonify({
+            'status': 'success',
+            'test_results': results
+        })
+    except Exception as e:
+        logger.error(f"Error testing handlers: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.template_filter('format_years')
 def format_years(birth_year, death_year=None):

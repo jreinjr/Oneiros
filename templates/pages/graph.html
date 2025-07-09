@@ -88,6 +88,34 @@
             </div>
 
             <div class="control-group">
+                <h3>Message Processing</h3>
+                <div class="control-item">
+                    <div class="processing-mode-label">User Response</div>
+                    <div class="processing-mode-toggle user-response-mode">
+                        <button class="mode-btn active" data-mode="echo">Echo</button>
+                        <button class="mode-btn" data-mode="llm">LLM</button>
+                        <button class="mode-btn" data-mode="quote">Quote</button>
+                        <button class="mode-btn" data-mode="rag">RAG</button>
+                    </div>
+                </div>
+                <div class="control-item">
+                    <div class="processing-mode-label">Screen Text</div>
+                    <div class="processing-mode-toggle screen-text-mode">
+                        <button class="mode-btn active" data-mode="echo">Echo</button>
+                        <button class="mode-btn" data-mode="llm">LLM</button>
+                        <button class="mode-btn" data-mode="quote">Quote</button>
+                        <button class="mode-btn" data-mode="rag">RAG</button>
+                    </div>
+                </div>
+                <div class="control-description">
+                    <strong>Echo:</strong> Return input unchanged<br>
+                    <strong>LLM:</strong> Process through local LLM (haiku)<br>
+                    <strong>Quote:</strong> Find similar quote via vector search<br>
+                    <strong>RAG:</strong> Find quote + LLM processing
+                </div>
+            </div>
+
+            <div class="control-group">
                 <h3>Highlighting Controls</h3>
                 <div class="control-item">
                     <label>Default Connection Thickness</label>
@@ -106,16 +134,77 @@
             </div>
 
             <div class="control-group">
-                <h3>Logger Settings</h3>
-                <div class="control-item">
-                    <label for="aiEnhancedLogging">
-                        <input type="checkbox" id="aiEnhancedLogging" checked>
-                        AI-Enhanced Logging
-                    </label>
-                    <div class="control-description">
-                        Send log messages to Ollama (llama3.2:3b) for poetic transformation
+                <h3>Color Controls</h3>
+                <div class="color-controls-container">
+                    <div class="color-section">
+                        <h4>Node Colors</h4>
+                        <div class="color-item">
+                            <label>Selected Node</label>
+                            <input type="color" id="selectedNodeColor" value="#ffffff">
+                        </div>
+                        <div class="color-item">
+                            <label>Highlighted Node</label>
+                            <input type="color" id="highlightedNodeColor" value="#ffffff">
+                        </div>
+                        <div class="color-item">
+                            <label>Default Node</label>
+                            <input type="color" id="defaultNodeColor" value="#4CAF50">
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <h4>Connection Colors</h4>
+                        <div class="color-item">
+                            <label>Highlighted Connection</label>
+                            <input type="color" id="highlightedLinkColor" value="#ffffff">
+                        </div>
+                        <div class="color-item">
+                            <label>Default Connection</label>
+                            <input type="color" id="defaultLinkColor" value="#666666">
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <h4>Interface Colors</h4>
+                        <div class="color-item">
+                            <label>Graph Background</label>
+                            <input type="color" id="graphBackgroundColor" value="#000000">
+                        </div>
+                        <div class="color-item">
+                            <label>Popup Primary</label>
+                            <input type="color" id="popupPrimaryColor" value="#4CAF50">
+                        </div>
+                        <div class="color-item">
+                            <label>Popup Secondary</label>
+                            <input type="color" id="popupSecondaryColor" value="#388E3C">
+                        </div>
+                        <div class="color-item">
+                            <label>Popup Background</label>
+                            <input type="color" id="popupBackgroundColor" value="#000000">
+                        </div>
+                        <div class="color-item">
+                            <label>Log Primary</label>
+                            <input type="color" id="logPrimaryColor" value="#4CAF50">
+                        </div>
+                        <div class="color-item">
+                            <label>Log Secondary</label>
+                            <input type="color" id="logSecondaryColor" value="#388E3C">
+                        </div>
+                        <div class="color-item">
+                            <label>Log Background</label>
+                            <input type="color" id="logBackgroundColor" value="#000000">
+                        </div>
+                    </div>
+                    
+                    <div class="palette-actions">
+                        <button id="savePalette" class="save-palette-btn">Save Palette</button>
+                        <button id="resetPalette" class="reset-palette-btn">Reset to Default</button>
                     </div>
                 </div>
+            </div>
+
+            <div class="control-group">
+                <h3>Logger Settings</h3>
                 <div class="control-item">
                     <label>Message Display Duration (seconds)</label>
                     <div class="slider-container">

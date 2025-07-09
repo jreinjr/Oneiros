@@ -5,7 +5,7 @@ import sys
 import logging
 from neo4j import GraphDatabase
 from sentence_transformers import SentenceTransformer
-from typing import List, Dict
+from typing import List, Dict, Optional
 import textwrap
 
 # Configure logging
@@ -16,11 +16,17 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class QuoteSimilaritySearch:
-    def __init__(self, uri: str, username: str, password: str):
+    def __init__(self, uri: str, username: str, password: str, sentence_model: Optional[SentenceTransformer] = None):
         """Initialize Neo4j connection and sentence transformer model"""
         self.driver = GraphDatabase.driver(uri, auth=(username, password))
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
-        logger.info("Initialized quote similarity search")
+        
+        # Use provided model or initialize new one
+        if sentence_model is not None:
+            self.model = sentence_model
+            logger.info("Using provided sentence transformer model")
+        else:
+            self.model = SentenceTransformer('all-MiniLM-L6-v2')
+            logger.info("Initialized new sentence transformer model")
         
     def close(self):
         """Close Neo4j connection"""

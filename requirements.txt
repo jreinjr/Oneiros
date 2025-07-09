@@ -19,7 +19,7 @@ aiohttp
 
 # Vector embeddings
 sentence-transformers
-numpy
+numpy<2.0
 
 # Development dependencies
 pytest

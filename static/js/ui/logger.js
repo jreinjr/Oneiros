@@ -426,7 +426,7 @@ export class LoggerManager {
     }
     
     /**
-     * Unified method to add log entry with animation and AI enhancement
+     * Unified method to add log entry with animation
      * @param {string} text - Text to display
      * @param {string} author - Author name (optional)
      * @param {string} type - Entry type ('info', 'warning', 'error')
@@ -435,22 +435,9 @@ export class LoggerManager {
     async addLogEntryWithAnimation(text, author = null, type = 'info', interrupt = false) {
         if (!text) return;
         
-        // Determine final text to display
-        let finalText = text;
-        
-        // Check if AI-enhanced logging is enabled
-        if (this.config.get('aiEnhancedLogging')) {
-            try {
-                finalText = await this.enhanceWithAI(text);
-            } catch (error) {
-                console.error('AI enhancement failed, using original message:', error);
-                finalText = text;
-            }
-        }
-        
         // Create message data object
         const messageData = {
-            text: finalText,
+            text: text,
             author: author,
             type: type
         };

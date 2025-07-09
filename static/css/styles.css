@@ -22,6 +22,9 @@ body {
     border-radius: 8px;
     padding: 20px;
     min-width: 280px;
+    max-width: 320px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
     backdrop-filter: blur(10px);
     z-index: 1000;
     transition: all 0.3s ease;
@@ -194,6 +197,165 @@ input[type="range"]::-moz-range-thumb {
 .theme-btn.love.active {
     background: #F44336;
     border-color: #F44336;
+}
+
+/* Processing mode toggle buttons */
+.processing-mode-toggle {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 6px 8px;
+    border: none;
+    background: transparent;
+    color: #ccc;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
+
+.mode-btn.active {
+    color: #fff;
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.mode-btn:hover {
+    color: #fff;
+    background: rgba(76, 175, 80, 0.3);
+}
+
+/* Theme-specific mode button colors */
+.theme-truth .mode-btn.active {
+    background: #2196F3;
+    border-color: #2196F3;
+}
+
+.theme-truth .mode-btn:hover {
+    background: rgba(33, 150, 243, 0.3);
+}
+
+.theme-love .mode-btn.active {
+    background: #F44336;
+    border-color: #F44336;
+}
+
+.theme-love .mode-btn:hover {
+    background: rgba(244, 67, 54, 0.3);
+}
+
+.processing-mode-label {
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 5px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Color Controls */
+.color-controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.color-section {
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.color-section h4 {
+    margin: 0 0 8px 0;
+    color: #4CAF50;
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.color-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.color-item:last-child {
+    margin-bottom: 0;
+}
+
+.color-item label {
+    font-size: 12px;
+    color: #ccc;
+    flex: 1;
+}
+
+.color-item input[type="color"] {
+    width: 40px;
+    height: 25px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    cursor: pointer;
+    background: transparent;
+    padding: 0;
+}
+
+.color-item input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-item input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 3px;
+}
+
+.palette-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.save-palette-btn, .reset-palette-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.save-palette-btn {
+    background: #4CAF50;
+    color: white;
+}
+
+.save-palette-btn:hover {
+    background: #45a049;
+}
+
+.reset-palette-btn {
+    background: #666;
+    color: white;
+}
+
+.reset-palette-btn:hover {
+    background: #777;
 }
 
 /* Update button colors based on theme */
