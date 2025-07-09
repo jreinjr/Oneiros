@@ -29,7 +29,11 @@ export class GraphVisualizer {
      * Initialize the 3D Force Graph
      */
     initialize() {
+        const colors = this.config.get('colors');
+        const backgroundColor = colors.graphBackground || '#000000';
+        
         this.graph = new ForceGraph3D(document.getElementById(this.containerId))
+            .backgroundColor(backgroundColor)
             .enableNodeDrag(false)
             .enableNavigationControls(true)
             .showNavInfo(false)
@@ -278,6 +282,16 @@ export class GraphVisualizer {
             default:
                 // Handle other config changes if needed
                 break;
+        }
+    }
+    
+    /**
+     * Update the background color of the 3D scene
+     * @param {string} color - New background color
+     */
+    updateBackgroundColor(color) {
+        if (this.graph) {
+            this.graph.backgroundColor(color);
         }
     }
 

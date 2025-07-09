@@ -101,6 +101,9 @@ export class LoggerManager {
             logEntry.classList.add(`log-${messageData.type}`);
         }
         
+        // Apply current color configuration
+        this.applyLogEntryColors(logEntry);
+        
         // Create text content span
         const textContent = document.createElement('span');
         textContent.className = 'text-content';
@@ -530,6 +533,46 @@ export class LoggerManager {
      */
     isAIEnhancedLoggingEnabled() {
         return this.config.get('aiEnhancedLogging');
+    }
+    
+    /**
+     * Apply colors to a log entry element
+     * @param {HTMLElement} logEntry - The log entry element
+     */
+    applyLogEntryColors(logEntry) {
+        const colors = this.config.get('colors');
+        if (!colors) return;
+        
+        // Convert hex primary color to rgba for background
+        const entryBackground = colors.logPrimary ? this.hexToRgba(colors.logPrimary, 0.1) : 'rgba(76, 175, 80, 0.1)';
+        
+        // Apply styles
+        logEntry.style.setProperty('background', entryBackground, 'important');
+        logEntry.style.setProperty('border-left-color', colors.logPrimary || '#4CAF50', 'important');
+        logEntry.style.setProperty('color', colors.logSecondary || 'rgba(255, 255, 255, 0.6)', 'important');
+    }
+    
+    /**
+     * Update colors for all log entries
+     */
+    updateLogColors() {
+        const logEntries = document.querySelectorAll('.log-entry');
+        logEntries.forEach(entry => {
+            this.applyLogEntryColors(entry);
+        });
+    }
+    
+    /**
+     * Convert hex color to rgba
+     * @param {string} hex - Hex color
+     * @param {number} alpha - Alpha value
+     * @returns {string} RGBA color
+     */
+    hexToRgba(hex, alpha) {
+        const r = parseInt(hex.substr(1, 2), 16);
+        const g = parseInt(hex.substr(3, 2), 16);
+        const b = parseInt(hex.substr(5, 2), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
     
     /**

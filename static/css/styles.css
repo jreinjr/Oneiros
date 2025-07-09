@@ -285,6 +285,15 @@ input[type="range"]::-moz-range-thumb {
     text-transform: uppercase;
 }
 
+/* Theme-specific color section header colors */
+.theme-truth .color-section h4 {
+    color: #2196F3;
+}
+
+.theme-love .color-section h4 {
+    color: #F44336;
+}
+
 .color-item {
     display: flex;
     align-items: center;

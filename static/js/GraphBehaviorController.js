@@ -382,6 +382,12 @@ export class GraphBehaviorController {
     updateBackgroundColor() {
         const backgroundColor = this.config.get('colors.graphBackground');
         if (backgroundColor) {
+            // Update the three.js scene background
+            if (this.visualizer) {
+                this.visualizer.updateBackgroundColor(backgroundColor);
+            }
+            
+            // Also update the HTML elements for consistency
             document.body.style.backgroundColor = backgroundColor;
             const graphContainer = document.getElementById('graph-container');
             if (graphContainer) {
@@ -390,53 +396,13 @@ export class GraphBehaviorController {
         }
     }
 
-    /**
-     * Update popup colors
-     */
-    updatePopupColors() {
-        const colors = this.config.get('colors');
-        const popup = document.getElementById('node-popup');
-        if (popup && colors) {
-            popup.style.setProperty('background-color', colors.popupBackground || 'rgba(0, 0, 0, 0.9)', 'important');
-            popup.style.setProperty('border-color', colors.popupPrimary || '#4CAF50', 'important');
-            // Create rgba shadow color
-            const shadowColor = colors.popupPrimary ? this.hexToRgba(colors.popupPrimary, 0.3) : 'rgba(76, 175, 80, 0.3)';
-            popup.style.setProperty('box-shadow', `0 4px 20px ${shadowColor}`, 'important');
-            
-            const title = document.getElementById('node-popup-title');
-            if (title) {
-                title.style.setProperty('color', colors.popupPrimary || '#4CAF50', 'important');
-            }
-            
-            const name = document.getElementById('node-popup-name');
-            if (name) {
-                name.style.setProperty('color', colors.popupSecondary || '#fff', 'important');
-            }
-        }
-    }
 
     /**
      * Update log colors
      */
     updateLogColors() {
-        const colors = this.config.get('colors');
-        const logPanel = document.getElementById('poetry-log');
-        if (logPanel && colors) {
-            logPanel.style.setProperty('background-color', colors.logBackground || 'rgba(0, 0, 0, 0.8)', 'important');
-            logPanel.style.setProperty('border-color', colors.logPrimary || '#4CAF50', 'important');
-            
-            const logTitle = document.querySelector('.log-title');
-            if (logTitle) {
-                logTitle.style.setProperty('color', colors.logPrimary || '#4CAF50', 'important');
-            }
-
-            // Update log entries too
-            const logEntries = document.querySelectorAll('.log-entry');
-            const entryBackground = colors.logPrimary ? this.hexToRgba(colors.logPrimary, 0.1) : 'rgba(76, 175, 80, 0.1)';
-            logEntries.forEach(entry => {
-                entry.style.setProperty('background', entryBackground, 'important');
-                entry.style.setProperty('border-left-color', colors.logPrimary || '#4CAF50', 'important');
-            });
+        if (this.logger) {
+            this.logger.updateLogColors();
         }
     }
 
@@ -475,28 +441,12 @@ export class GraphBehaviorController {
     }
 
     /**
-     * Convert hex color to rgba
-     * @param {string} hex - Hex color
-     * @param {number} alpha - Alpha value
-     * @returns {string} RGBA color
+     * Update popup colors
      */
-    hexToRgba(hex, alpha) {
-        const r = parseInt(hex.substr(1, 2), 16);
-        const g = parseInt(hex.substr(3, 2), 16);
-        const b = parseInt(hex.substr(5, 2), 16);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    }
-
-    /**
-     * Get current application state
-     * @returns {Object} Current state
-     */
-    getState() {
-        return {
-            graphData: this.graphData,
-            currentNode: this.currentNode,
-            configuration: this.config.getAll()
-        };
+    updatePopupColors() {
+        if (this.popup) {
+            this.popup.updateColors();
+        }
     }
 
     /**

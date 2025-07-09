@@ -111,6 +111,9 @@ export class PopupManager {
             }
         }
         
+        // Apply colors from config
+        this.applyPopupColors();
+        
         // Position popup near the node if not already positioned
         if (this.position.x === 0 && this.position.y === 0) {
             this.positionNearNode(node);
@@ -379,6 +382,63 @@ export class PopupManager {
         }
     }
 
+    /**
+     * Apply popup colors from configuration
+     */
+    applyPopupColors() {
+        if (!this.popup || !this.visualizer || !this.visualizer.config) return;
+        
+        const colors = this.visualizer.config.get('colors');
+        if (!colors) return;
+        
+        // Apply background color
+        this.popup.style.setProperty('background-color', colors.popupBackground || 'rgba(0, 0, 0, 0.9)', 'important');
+        
+        // Apply border color
+        this.popup.style.setProperty('border-color', colors.popupPrimary || '#4CAF50', 'important');
+        
+        // Create rgba shadow color
+        const shadowColor = colors.popupPrimary ? this.hexToRgba(colors.popupPrimary, 0.3) : 'rgba(76, 175, 80, 0.3)';
+        this.popup.style.setProperty('box-shadow', `0 4px 20px ${shadowColor}`, 'important');
+        
+        // Apply title color
+        if (this.popupTitle) {
+            this.popupTitle.style.setProperty('color', colors.popupPrimary || '#4CAF50', 'important');
+        }
+        
+        // Apply content color (secondary)
+        if (this.popupName) {
+            this.popupName.style.setProperty('color', colors.popupSecondary || '#fff', 'important');
+        }
+        
+        // Apply connection line color
+        if (this.connectionLine) {
+            this.connectionLine.style.setProperty('stroke', colors.popupPrimary || '#4CAF50', 'important');
+        }
+    }
+    
+    /**
+     * Update popup colors (called when colors change in config)
+     */
+    updateColors() {
+        if (this.isVisible()) {
+            this.applyPopupColors();
+        }
+    }
+    
+    /**
+     * Convert hex color to rgba
+     * @param {string} hex - Hex color
+     * @param {number} alpha - Alpha value
+     * @returns {string} RGBA color
+     */
+    hexToRgba(hex, alpha) {
+        const r = parseInt(hex.substr(1, 2), 16);
+        const g = parseInt(hex.substr(3, 2), 16);
+        const b = parseInt(hex.substr(5, 2), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    
     /**
      * Dispose of the popup manager and clean up resources
      */
