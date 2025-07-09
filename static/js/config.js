@@ -38,7 +38,12 @@ export const DEFAULT_CONFIG = {
     
     // Logger Settings
     messageDuration: 5,  // seconds
-    typingSpeed: 33  // characters per second
+    typingSpeed: 33,  // characters per second
+    logPanelScale: 100,  // percentage (75-300)
+    
+    // Feature Toggles
+    poetryLogEnabled: true,
+    nodePopupEnabled: true
 };
 
 // Theme color configurations with expanded palette
@@ -116,7 +121,8 @@ export const CONFIG_LIMITS = {
     connectionThickness: { min: 0.5, max: 5, step: 0.5 },
     highlightSteps: { min: 0, max: 5, step: 1 },
     cameraDistance: { min: 20, max: 200, step: 10 },
-    cameraAnimationDuration: { min: 500, max: 5000, step: 500 }
+    cameraAnimationDuration: { min: 500, max: 5000, step: 500 },
+    logPanelScale: { min: 75, max: 300, step: 25 }
 };
 
 // Color component definitions for UI

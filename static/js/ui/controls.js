@@ -21,6 +21,7 @@ export class ControlsManager {
     initialize() {
         this.setupSliders();
         this.setupButtons();
+        this.setupCheckboxes();
         this.setupColorControls();
         this.setupProcessingModeControls();
         this.setupConfigListeners();
@@ -33,7 +34,7 @@ export class ControlsManager {
         const sliders = [
             'nodeCount', 'connectionDensity',
             'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps',
-            'messageDuration', 'typingSpeed'
+            'messageDuration', 'typingSpeed', 'logPanelScale'
         ];
 
         sliders.forEach(id => {
@@ -52,11 +53,21 @@ export class ControlsManager {
             slider.value = currentValue;
             valueDisplay.textContent = currentValue;
             
+            // Initialize log panel scale if this is the logPanelScale slider
+            if (id === 'logPanelScale') {
+                this.updateLogPanelScale(currentValue);
+            }
+            
             // Add event listener
             slider.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value);
                 valueDisplay.textContent = value;
                 this.config.set(id, value);
+                
+                // Handle log panel scaling
+                if (id === 'logPanelScale') {
+                    this.updateLogPanelScale(value);
+                }
                 
                 // Trigger specific callbacks
                 this.triggerCallback(id, value);
@@ -104,6 +115,39 @@ export class ControlsManager {
                 this.triggerCallback('resetPalette');
             });
         }
+    }
+
+    /**
+     * Setup checkbox controls
+     */
+    setupCheckboxes() {
+        const checkboxes = [
+            'poetryLogEnabled',
+            'nodePopupEnabled'
+        ];
+
+        checkboxes.forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (!checkbox) {
+                console.warn(`Checkbox not found: ${id}`);
+                return;
+            }
+
+            this.elements.set(id, checkbox);
+            
+            // Set initial state from config
+            const currentValue = this.config.get(id);
+            checkbox.checked = currentValue !== undefined ? currentValue : true;
+            
+            // Add event listener
+            checkbox.addEventListener('change', (e) => {
+                const value = e.target.checked;
+                this.config.set(id, value);
+                
+                // Trigger specific callbacks
+                this.triggerCallback(id, value);
+            });
+        });
     }
 
     /**
@@ -551,6 +595,23 @@ export class ControlsManager {
             getValue: valueGetter,
             setValue: valueSetter
         });
+    }
+
+    /**
+     * Update log panel scale
+     * @param {number} scale - Scale percentage (75-300)
+     */
+    updateLogPanelScale(scale) {
+        const logPanel = document.getElementById('poetry-log');
+        if (!logPanel) return;
+        
+        // Convert percentage to scale factor
+        const scaleFactor = scale / 100;
+        
+        // Combine centering transform with scaling transform
+        // The CSS already has translate(-50%, -50%) for centering, so we need to preserve it
+        logPanel.style.transformOrigin = 'center center';
+        logPanel.style.transform = `translate(-50%, -50%) scale(${scaleFactor})`;
     }
 
     /**

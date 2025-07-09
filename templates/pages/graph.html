@@ -206,6 +206,36 @@
             <div class="control-group">
                 <h3>Logger Settings</h3>
                 <div class="control-item">
+                    <label>Poetry Log</label>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="poetryLogEnabled" checked>
+                        <label for="poetryLogEnabled">Enable Poetry Log</label>
+                    </div>
+                    <div class="control-description">
+                        Show/hide the poetry log message display
+                    </div>
+                </div>
+                <div class="control-item">
+                    <label>Node Popup</label>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="nodePopupEnabled" checked>
+                        <label for="nodePopupEnabled">Enable Node Popup</label>
+                    </div>
+                    <div class="control-description">
+                        Show/hide node information popup and connection line
+                    </div>
+                </div>
+                <div class="control-item">
+                    <label>Log Panel Scale (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="logPanelScale" min="75" max="300" step="25" value="100">
+                        <span class="value-display" id="logPanelScaleValue">100</span>
+                    </div>
+                    <div class="control-description">
+                        Size of the log panel (grows from center)
+                    </div>
+                </div>
+                <div class="control-item">
                     <label>Message Display Duration (seconds)</label>
                     <div class="slider-container">
                         <input type="range" id="messageDuration" min="1" max="15" step="1" value="5">

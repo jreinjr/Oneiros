@@ -464,6 +464,9 @@ export class LoggerManager {
         const charactersPerSecond = this.config.get('typingSpeed');
         const typingSpeed = Math.round(1000 / charactersPerSecond); // Convert to milliseconds per character
         
+        // Set CSS to preserve whitespace and newlines
+        element.style.whiteSpace = 'pre-wrap';
+        
         const typeNextChar = () => {
             if (index < text.length) {
                 element.textContent += text[index];

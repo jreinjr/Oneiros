@@ -144,6 +144,27 @@ input[type="range"]::-moz-range-thumb {
     font-weight: bold;
 }
 
+/* Checkbox container styles */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #4CAF50;
+    cursor: pointer;
+}
+
+.checkbox-container label {
+    font-size: 14px;
+    color: #fff;
+    cursor: pointer;
+    margin: 0;
+}
+
 /* Theme toggle buttons */
 .theme-toggle {
     display: flex;

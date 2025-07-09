@@ -175,6 +175,15 @@ export class GraphBehaviorController {
             this.logger.setTypingSpeed(value);
         });
 
+        // Feature toggle callbacks
+        this.controls.setCallback('poetryLogEnabled', (controlId, value) => {
+            this.handlePoetryLogToggle(value);
+        });
+
+        this.controls.setCallback('nodePopupEnabled', (controlId, value) => {
+            this.handleNodePopupToggle(value);
+        });
+
         // Message processing mode callbacks
         this.controls.setCallback('userResponseModeChanged', (controlId, value) => {
             this.handleProcessingModeChange('user', value);
@@ -275,12 +284,16 @@ export class GraphBehaviorController {
         const previousNode = this.currentNode;
         this.currentNode = node;
         this.updateHighlights();
-        this.popup.show(node);
+        
+        // Show popup only if enabled
+        if (this.config.get('nodePopupEnabled')) {
+            this.popup.show(node);
+        }
         
         // Animate camera to focus on the node
         this.visualizer.focusCameraOnNode(node);
         
-        // Only log if it's a different node
+        // Only log if it's a different node and logging is enabled
         if (!previousNode || previousNode.id !== node.id) {
             this.logNodeConnection(node);
         }
@@ -305,6 +318,11 @@ export class GraphBehaviorController {
      */
     logNodeConnection(node) {
         if (!node) return;
+        
+        // Only log if poetry log is enabled
+        if (!this.config.get('poetryLogEnabled')) {
+            return;
+        }
 
         // Check if this is a Quote node with quote text
         if (node.quote) {
@@ -438,6 +456,28 @@ export class GraphBehaviorController {
         } catch (error) {
             console.error('Error updating processing mode:', error);
         }
+    }
+
+    /**
+     * Handle poetry log toggle
+     * @param {boolean} enabled - Whether poetry log is enabled
+     */
+    handlePoetryLogToggle(enabled) {
+        if (this.logger) {
+            this.logger.setVisible(enabled);
+        }
+        console.log(`Poetry log ${enabled ? 'enabled' : 'disabled'}`);
+    }
+
+    /**
+     * Handle node popup toggle
+     * @param {boolean} enabled - Whether node popup is enabled
+     */
+    handleNodePopupToggle(enabled) {
+        if (!enabled && this.popup) {
+            this.popup.hide();
+        }
+        console.log(`Node popup ${enabled ? 'enabled' : 'disabled'}`);
     }
 
     /**
