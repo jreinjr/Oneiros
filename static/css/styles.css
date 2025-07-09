@@ -314,21 +314,19 @@ input[type="checkbox"] {
 
 
 #poetry-log {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.05);
-    padding: 40px;
-    border-radius: 16px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 0;
     font-size: 32px;
     color: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(10px);
-    min-width: 800px;
-    max-width: 1200px;
-    border: 1px solid rgba(51, 51, 51, 0.3);
+    min-width: 400px;
+    max-width: 800px;
     display: flex;
     flex-direction: column;
-    max-height: 80vh;
+    pointer-events: none;
+    z-index: 1000;
 }
 
 #log-entries {
@@ -344,13 +342,18 @@ input[type="checkbox"] {
     background: rgba(76, 175, 80, 0.1);
     border-left: 6px solid #4CAF50;
     border-radius: 8px;
-    transition: opacity 0.5s ease-out;
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
     line-height: 1.4;
     font-family: "Mori", 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-weight: 600;
     letter-spacing: -0.01em;
     word-break: break-word;
     position: relative;
+    text-align: center;
+    pointer-events: auto;
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transform: translateY(20px);
 }
 
 .theme-truth .log-entry {
@@ -363,9 +366,20 @@ input[type="checkbox"] {
     border-left-color: #F44336;
 }
 
-.log-entry.fade-1 { opacity: 0.5; }
-.log-entry.fade-2 { opacity: 0.3; }
-.log-entry.fade-3 { opacity: 0.2; }
+.log-entry.fade-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.log-entry.fade-out {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+
+.log-entry.typing {
+    opacity: 1;
+    transform: translateY(0);
+}
 
 .log-title {
     display: none;

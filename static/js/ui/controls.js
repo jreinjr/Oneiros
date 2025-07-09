@@ -30,7 +30,8 @@ export class ControlsManager {
     setupSliders() {
         const sliders = [
             'nodeCount', 'connectionDensity',
-            'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps'
+            'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps',
+            'messageDuration', 'typingSpeed'
         ];
 
         sliders.forEach(id => {

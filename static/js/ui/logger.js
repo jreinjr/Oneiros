@@ -14,10 +14,12 @@ export class LoggerManager {
         this.logContainer = document.getElementById('log-entries');
         this.logPanel = document.getElementById('poetry-log');
         
-        // State
-        this.entries = [];
-        this.maxEntries = 6;
-        this.fadeClasses = ['fade-1', 'fade-2', 'fade-3'];
+        // Single message display state
+        this.currentMessage = null;
+        this.currentMessageElement = null;
+        this.messageQueue = [];
+        this.isDisplaying = false;
+        this.dismissTimer = null;
         
         this.initialize();
     }
@@ -81,78 +83,214 @@ export class LoggerManager {
     }
 
     /**
-     * Update the log display
+     * Display a single message with fade-in animation
+     * @param {Object} messageData - Message data object
      */
-    updateDisplay() {
+    async showMessage(messageData) {
         if (!this.logContainer) return;
         
-        // Clear existing entries
-        this.logContainer.innerHTML = '';
+        // Clear any existing message
+        this.hideCurrentMessage();
         
-        // Add each entry - newest entries go at the bottom
-        this.entries.forEach((entry, index) => {
-            // For string entries, create a div
-            if (typeof entry === 'string') {
-                const logEntry = document.createElement('div');
-                logEntry.className = 'log-entry';
-                logEntry.textContent = entry;
-                
-                // Add fade classes for older entries (at the top)
-                if (index >= 3) {
-                    const fadeIndex = Math.min(index - 3, this.fadeClasses.length - 1);
-                    logEntry.classList.add(this.fadeClasses[fadeIndex]);
-                }
-                
-                this.logContainer.appendChild(logEntry);
-            } else if (entry.element) {
-                // For animated entries, use the pre-created element directly
-                // Add fade classes for older entries (at the top)
-                if (index >= 3) {
-                    const fadeIndex = Math.min(index - 3, this.fadeClasses.length - 1);
-                    entry.element.classList.add(this.fadeClasses[fadeIndex]);
-                }
-                
-                this.logContainer.appendChild(entry.element);
-            }
+        // Create the log entry element
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry typing';
+        
+        // Add type-specific styling
+        if (messageData.type && messageData.type !== 'info') {
+            logEntry.classList.add(`log-${messageData.type}`);
+        }
+        
+        // Create text content span
+        const textContent = document.createElement('span');
+        textContent.className = 'text-content';
+        
+        // Create blinking cursor
+        const cursor = document.createElement('span');
+        cursor.className = 'blinking-cursor';
+        cursor.textContent = '_';
+        
+        logEntry.appendChild(textContent);
+        logEntry.appendChild(cursor);
+        
+        // Add to DOM
+        this.logContainer.appendChild(logEntry);
+        
+        // Store current message
+        this.currentMessage = messageData;
+        this.currentMessageElement = logEntry;
+        this.isDisplaying = true;
+        
+        // Start fade-in animation
+        setTimeout(() => {
+            logEntry.classList.add('fade-in');
+        }, 50);
+        
+        // Start the typing animation
+        this.animateTyping(textContent, messageData.text, () => {
+            // Remove typing class and hide cursor when done
+            logEntry.classList.remove('typing');
+            logEntry.classList.add('complete');
+            
+            // Set auto-dismiss timer
+            this.setDismissTimer();
         });
     }
-
+    
     /**
-     * Clear all log entries
+     * Hide the current message with fade-out animation
      */
-    clear() {
-        this.entries = [];
-        this.updateDisplay();
-    }
-
-    /**
-     * Get all log entries
-     * @returns {Array} Array of log entry strings
-     */
-    getEntries() {
-        return [...this.entries];
-    }
-
-    /**
-     * Set maximum number of entries to display
-     * @param {number} maxEntries - Maximum number of entries
-     */
-    setMaxEntries(maxEntries) {
-        this.maxEntries = Math.max(1, maxEntries);
+    hideCurrentMessage() {
+        if (!this.currentMessageElement) return;
         
-        // Trim entries if necessary
-        if (this.entries.length > this.maxEntries) {
-            this.entries = this.entries.slice(0, this.maxEntries);
-            this.updateDisplay();
+        // Clear dismiss timer
+        this.clearDismissTimer();
+        
+        // Add fade-out class
+        this.currentMessageElement.classList.remove('fade-in');
+        this.currentMessageElement.classList.add('fade-out');
+        
+        // Remove element after transition
+        setTimeout(() => {
+            if (this.currentMessageElement && this.currentMessageElement.parentNode) {
+                this.currentMessageElement.parentNode.removeChild(this.currentMessageElement);
+            }
+            this.currentMessage = null;
+            this.currentMessageElement = null;
+            this.isDisplaying = false;
+            
+            // Process next message in queue
+            this.processMessageQueue();
+        }, 500); // Match CSS transition duration
+    }
+    
+    /**
+     * Set auto-dismiss timer for current message
+     */
+    setDismissTimer() {
+        this.clearDismissTimer();
+        const duration = this.config.get('messageDuration') * 1000; // Convert seconds to milliseconds
+        this.dismissTimer = setTimeout(() => {
+            this.hideCurrentMessage();
+        }, duration);
+    }
+    
+    /**
+     * Clear auto-dismiss timer
+     */
+    clearDismissTimer() {
+        if (this.dismissTimer) {
+            clearTimeout(this.dismissTimer);
+            this.dismissTimer = null;
         }
     }
+    
+    /**
+     * Process the next message in the queue
+     */
+    async processMessageQueue() {
+        if (this.messageQueue.length === 0 || this.isDisplaying) return;
+        
+        const nextMessage = this.messageQueue.shift();
+        await this.showMessage(nextMessage);
+    }
+    
+    /**
+     * Add message to queue or display immediately
+     * @param {Object} messageData - Message data object
+     */
+    async queueMessage(messageData) {
+        if (this.isDisplaying) {
+            // If currently displaying, add to queue
+            this.messageQueue.push(messageData);
+        } else {
+            // Display immediately
+            await this.showMessage(messageData);
+        }
+    }
+    
+    /**
+     * Add message with interrupt (dismisses current message)
+     * @param {Object} messageData - Message data object
+     */
+    async addMessageWithInterrupt(messageData) {
+        // Clear queue and hide current message
+        this.messageQueue = [];
+        this.hideCurrentMessage();
+        
+        // Wait for current message to finish hiding, then show new one
+        setTimeout(async () => {
+            await this.showMessage(messageData);
+        }, 100);
+    }
 
     /**
-     * Get maximum number of entries
-     * @returns {number} Maximum number of entries
+     * Clear all log entries and queued messages
      */
-    getMaxEntries() {
-        return this.maxEntries;
+    clear() {
+        // Clear message queue
+        this.messageQueue = [];
+        
+        // Clear dismiss timer
+        if (this.dismissTimer) {
+            clearTimeout(this.dismissTimer);
+            this.dismissTimer = null;
+        }
+        
+        // Hide current message if it exists
+        if (this.currentMessageElement) {
+            this.hideCurrentMessage();
+        }
+        
+        // Clear container
+        if (this.logContainer) {
+            this.logContainer.innerHTML = '';
+        }
+        
+        // Reset state
+        this.currentMessage = null;
+        this.currentMessageElement = null;
+        this.isDisplaying = false;
+    }
+
+    /**
+     * Get current message information
+     * @returns {Object|null} Current message data or null if no message
+     */
+    getCurrentMessage() {
+        return this.currentMessage ? { ...this.currentMessage } : null;
+    }
+
+    /**
+     * Set the message display duration
+     * @param {number} duration - Duration in seconds
+     */
+    setMessageDuration(duration) {
+        this.config.set('messageDuration', duration);
+    }
+
+    /**
+     * Get the current message display duration
+     * @returns {number} Duration in seconds
+     */
+    getMessageDuration() {
+        return this.config.get('messageDuration');
+    }
+
+    /**
+     * Set the typing speed
+     * @param {number} speed - Speed in characters per second
+     */
+    setTypingSpeed(speed) {
+        this.config.set('typingSpeed', speed);
+    }
+
+    /**
+     * Get the current typing speed
+     * @returns {number} Speed in characters per second
+     */
+    getTypingSpeed() {
+        return this.config.get('typingSpeed');
     }
 
     /**
@@ -184,45 +322,14 @@ export class LoggerManager {
     }
 
     /**
-     * Set log panel position
-     * @param {string} position - CSS position ('bottom-left', 'bottom-right', 'top-left', 'top-right')
+     * Get message queue information
+     * @returns {Object} Queue information including length and messages
      */
-    setPosition(position) {
-        if (!this.logPanel) return;
-        
-        // Reset all position classes
-        this.logPanel.classList.remove('bottom-left', 'bottom-right', 'top-left', 'top-right');
-        
-        // Apply new position
-        this.logPanel.classList.add(position);
-        
-        // Update CSS properties based on position
-        switch (position) {
-            case 'bottom-left':
-                this.logPanel.style.bottom = '20px';
-                this.logPanel.style.left = '20px';
-                this.logPanel.style.top = 'auto';
-                this.logPanel.style.right = 'auto';
-                break;
-            case 'bottom-right':
-                this.logPanel.style.bottom = '20px';
-                this.logPanel.style.right = '20px';
-                this.logPanel.style.top = 'auto';
-                this.logPanel.style.left = 'auto';
-                break;
-            case 'top-left':
-                this.logPanel.style.top = '20px';
-                this.logPanel.style.left = '20px';
-                this.logPanel.style.bottom = 'auto';
-                this.logPanel.style.right = 'auto';
-                break;
-            case 'top-right':
-                this.logPanel.style.top = '20px';
-                this.logPanel.style.right = '20px';
-                this.logPanel.style.bottom = 'auto';
-                this.logPanel.style.left = 'auto';
-                break;
-        }
+    getQueueInfo() {
+        return {
+            length: this.messageQueue.length,
+            messages: this.messageQueue.map(msg => ({ ...msg }))
+        };
     }
 
     /**
@@ -270,78 +377,40 @@ export class LoggerManager {
     }
 
     /**
-     * Export log entries as text
-     * @param {string} separator - Line separator (default: '\n')
-     * @returns {string} Exported log text
+     * Get display state information
+     * @returns {Object} Current display state
      */
-    exportAsText(separator = '\n') {
-        return this.entries.join(separator);
+    getDisplayState() {
+        return {
+            isDisplaying: this.isDisplaying,
+            currentMessage: this.currentMessage,
+            queueLength: this.messageQueue.length,
+            messageDuration: this.messageDuration
+        };
     }
 
     /**
-     * Export log entries as JSON
-     * @returns {string} JSON string of log entries
+     * Force dismiss current message
      */
-    exportAsJSON() {
-        return JSON.stringify({
-            timestamp: new Date().toISOString(),
-            maxEntries: this.maxEntries,
-            entries: this.entries
-        }, null, 2);
-    }
-
-    /**
-     * Import log entries from JSON
-     * @param {string} jsonString - JSON string to import
-     * @returns {boolean} Whether import was successful
-     */
-    importFromJSON(jsonString) {
-        try {
-            const data = JSON.parse(jsonString);
-            
-            if (data.entries && Array.isArray(data.entries)) {
-                this.entries = data.entries.slice(0, this.maxEntries);
-                this.updateDisplay();
-                return true;
-            }
-        } catch (error) {
-            console.error('Failed to import log entries:', error);
+    dismissCurrentMessage() {
+        if (this.isDisplaying) {
+            this.hideCurrentMessage();
         }
-        
-        return false;
     }
 
     /**
-     * Set fade classes for older entries
-     * @param {Array} fadeClasses - Array of CSS class names
+     * Clear message queue without affecting current message
      */
-    setFadeClasses(fadeClasses) {
-        this.fadeClasses = fadeClasses;
-        this.updateDisplay();
+    clearQueue() {
+        this.messageQueue = [];
     }
 
     /**
-     * Get current fade classes
-     * @returns {Array} Array of fade class names
+     * Set whether messages should interrupt current display
+     * @param {boolean} shouldInterrupt - Whether new messages should interrupt current ones
      */
-    getFadeClasses() {
-        return [...this.fadeClasses];
-    }
-
-    /**
-     * Animate new entry addition
-     * @param {HTMLElement} entryElement - Entry element to animate
-     */
-    animateNewEntry(entryElement) {
-        if (!entryElement) return;
-        
-        // Add animation class
-        entryElement.classList.add('log-entry-new');
-        
-        // Remove animation class after animation completes
-        setTimeout(() => {
-            entryElement.classList.remove('log-entry-new');
-        }, 500);
+    setInterruptMode(shouldInterrupt) {
+        this.interruptMode = shouldInterrupt;
     }
 
     /**
@@ -361,8 +430,9 @@ export class LoggerManager {
      * @param {string} text - Text to display
      * @param {string} author - Author name (optional)
      * @param {string} type - Entry type ('info', 'warning', 'error')
+     * @param {boolean} interrupt - Whether to interrupt current message (default: false)
      */
-    async addLogEntryWithAnimation(text, author = null, type = 'info') {
+    async addLogEntryWithAnimation(text, author = null, type = 'info', interrupt = false) {
         if (!text) return;
         
         // Determine final text to display
@@ -378,50 +448,19 @@ export class LoggerManager {
             }
         }
         
-        // Create the log entry element with typewriter animation
-        const logEntry = document.createElement('div');
-        logEntry.className = 'log-entry typing';
-        
-        // Add type-specific styling
-        if (type !== 'info') {
-            logEntry.classList.add(`log-${type}`);
-        }
-        
-        // Create text content span
-        const textContent = document.createElement('span');
-        textContent.className = 'text-content';
-        
-        // Create blinking cursor
-        const cursor = document.createElement('span');
-        cursor.className = 'blinking-cursor';
-        cursor.textContent = '_';
-        
-        logEntry.appendChild(textContent);
-        logEntry.appendChild(cursor);
-        
-        // Add to entries array as an object with the element
-        const entryObj = {
-            element: logEntry,
+        // Create message data object
+        const messageData = {
             text: finalText,
             author: author,
             type: type
         };
         
-        this.entries.unshift(entryObj);
-        
-        // Keep only maxEntries
-        if (this.entries.length > this.maxEntries) {
-            this.entries = this.entries.slice(0, this.maxEntries);
+        // Add to display queue or interrupt current message
+        if (interrupt) {
+            await this.addMessageWithInterrupt(messageData);
+        } else {
+            await this.queueMessage(messageData);
         }
-        
-        this.updateDisplay();
-        
-        // Start the typing animation
-        this.animateTyping(textContent, finalText, () => {
-            // Remove typing class and hide cursor when done
-            logEntry.classList.remove('typing');
-            logEntry.classList.add('complete');
-        });
     }
     
     /**
@@ -432,7 +471,8 @@ export class LoggerManager {
      */
     animateTyping(element, text, onComplete) {
         let index = 0;
-        const typingSpeed = 30; // milliseconds per character
+        const charactersPerSecond = this.config.get('typingSpeed');
+        const typingSpeed = Math.round(1000 / charactersPerSecond); // Convert to milliseconds per character
         
         const typeNextChar = () => {
             if (index < text.length) {

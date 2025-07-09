@@ -159,6 +159,19 @@ export class GraphBehaviorController {
                 this.logNodeConnection(this.currentNode);
             }
         });
+
+        // Logger settings
+        this.controls.setCallback('aiEnhancedLogging', (controlId, value) => {
+            this.logger.setAIEnhancedLogging(value);
+        });
+
+        this.controls.setCallback('messageDuration', (controlId, value) => {
+            this.logger.setMessageDuration(value);
+        });
+
+        this.controls.setCallback('typingSpeed', (controlId, value) => {
+            this.logger.setTypingSpeed(value);
+        });
     }
 
     /**

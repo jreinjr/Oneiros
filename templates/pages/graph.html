@@ -116,6 +116,26 @@
                         Send log messages to Ollama (llama3.2:3b) for poetic transformation
                     </div>
                 </div>
+                <div class="control-item">
+                    <label>Message Display Duration (seconds)</label>
+                    <div class="slider-container">
+                        <input type="range" id="messageDuration" min="1" max="15" step="1" value="5">
+                        <span class="value-display" id="messageDurationValue">5</span>
+                    </div>
+                    <div class="control-description">
+                        How long messages stay visible before auto-dismissing
+                    </div>
+                </div>
+                <div class="control-item">
+                    <label>Typing Speed (characters per second)</label>
+                    <div class="slider-container">
+                        <input type="range" id="typingSpeed" min="10" max="100" step="5" value="33">
+                        <span class="value-display" id="typingSpeedValue">33</span>
+                    </div>
+                    <div class="control-description">
+                        Speed of the typewriter animation effect
+                    </div>
+                </div>
             </div>
 
         </div>

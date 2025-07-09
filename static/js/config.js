@@ -34,7 +34,9 @@ export const DEFAULT_CONFIG = {
     // Logger Settings
     aiEnhancedLogging: true,  // Default to AI-enhanced logging
     ollamaEndpoint: 'http://127.0.0.1:11434',
-    ollamaModel: 'llama3.2:3b'
+    ollamaModel: 'llama3.2:3b',
+    messageDuration: 5,  // seconds
+    typingSpeed: 33  // characters per second
 };
 
 // Theme color configurations
