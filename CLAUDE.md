@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## RULES
+
+We are using a venv in this repo. Always be sure that the .venv is active before running any Python commands.
+
 ## Project Overview
 
 **Oneiros** is a unified digital humanities platform that combines AI research agents, dynamic web visualization, and 3D graph exploration to study philosophical themes of Truth, Love, and Beauty across historical thinkers.
