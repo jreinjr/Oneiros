@@ -188,14 +188,10 @@ window.sendToLogger = async function(message) {
         
         const data = await response.json();
         
-        if (response.ok && app.isReady()) {
-            const controller = app.getController();
-            if (controller) {
-                // Add the processed screen text to the logger panel
-                if (data.screen_text) {
-                    controller.addLogMessage(data.screen_text, 'info');
-                }
-            }
+        if (response.ok) {
+            // Server now returns only user_response, no screen_text
+            // Screen text will be polled separately
+            console.log('Message sent successfully, user response:', data.user_response);
         }
         
         return data;
@@ -205,30 +201,35 @@ window.sendToLogger = async function(message) {
     }
 };
 
-// Poll for new messages from the server
-async function pollForMessages() {
+// Poll for screen text messages
+async function pollForScreenMessages() {
     if (!app.isReady()) return;
     
     try {
-        const response = await fetch('/api/messages');
+        const response = await fetch('/api/screen-messages');
         if (response.ok) {
             const data = await response.json();
             const controller = app.getController();
             
             if (controller && data.messages && data.messages.length > 0) {
-                // Add each message to the logger
+                // Add each screen message to the logger
                 data.messages.forEach(msg => {
-                    controller.addLogMessage(msg.message, 'info');
+                    if (msg.message && msg.message.content) {
+                        // Display the processed content, not the input
+                        controller.addLogMessage(msg.message, 'info');
+                    }
                 });
             }
         }
     } catch (error) {
-        console.error('Failed to poll for messages:', error);
+        console.error('Failed to poll for screen messages:', error);
     }
 }
 
-// Start polling for messages every 2 seconds
-setInterval(pollForMessages, 2000);
+// Start polling for screen messages every second
+setInterval(pollForScreenMessages, 1000);
+
+// Legacy polling removed - we now use screen-messages endpoint for processed content
 
 // Export for module usage
 export default app;

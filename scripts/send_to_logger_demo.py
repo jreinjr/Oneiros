@@ -114,8 +114,8 @@ def main():
             print(f"Sending: '{message}'")
             result = send_message_to_logger(message)
             
-            if result:
-                print(result)
+            if result and 'user_response' in result and 'content' in result['user_response']:
+                print(result['user_response']['content'])
             else:
                 print("✗ Failed to send message")
             print()

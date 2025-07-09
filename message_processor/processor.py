@@ -225,6 +225,75 @@ class MessageProcessor:
         
         return results
     
+    async def process_user_immediate(self, message: str, user_mode: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Process user response immediately and return it
+        
+        Args:
+            message: The message to process
+            user_mode: Override for user response mode
+            
+        Returns:
+            Dict with user_response only
+        """
+        user_response_mode = user_mode or self.processing_settings['user_response_mode']
+        logger.info(f"Processing user response with mode: {user_response_mode}")
+        
+        # Process user response with priority
+        user_result, user_task_id = await self._process_single_message(
+            message, user_response_mode, Priority.USER_RESPONSE
+        )
+        
+        return {
+            "user_response": user_result,
+            "user_task_id": user_task_id
+        }
+    
+    async def process_screen_async(self, message: str, screen_mode: Optional[str] = None, 
+                                   user_result: Optional[Dict[str, Any]] = None,
+                                   user_mode: Optional[str] = None) -> str:
+        """
+        Process screen text asynchronously (to be called after user response is sent)
+        
+        Args:
+            message: The message to process
+            screen_mode: Override for screen text mode
+            user_result: The user result to reuse if modes are the same
+            user_mode: The user mode that was used
+            
+        Returns:
+            Task ID for LLM processing or None
+        """
+        screen_text_mode = screen_mode or self.processing_settings['screen_text_mode']
+        user_response_mode = user_mode or self.processing_settings['user_response_mode']
+        
+        # Check if we can reuse the user result
+        if screen_text_mode == user_response_mode and user_result is not None:
+            logger.info("Screen mode same as user mode - storing user result for screen")
+            # Store the result directly for immediate retrieval
+            import uuid
+            task_id = str(uuid.uuid4())
+            await self.llm_queue._store_result(task_id, user_result)
+            return task_id
+        
+        # Process screen text
+        if screen_text_mode in ['llm', 'rag']:
+            # For LLM-based processing, submit to queue
+            task_id = await self.llm_queue.submit_task(
+                message=message,
+                handler=self.handlers[screen_text_mode].process,
+                priority=Priority.SCREEN_TEXT
+            )
+            logger.info(f"Screen text processing queued with task ID: {task_id}")
+            return task_id
+        else:
+            # For non-LLM processing, process directly and store
+            result = await self.handlers[screen_text_mode].process(message)
+            import uuid
+            task_id = str(uuid.uuid4())
+            await self.llm_queue._store_result(task_id, result)
+            return task_id
+    
     async def shutdown(self):
         """Shutdown the message processor and clean up resources"""
         logger.info("Shutting down message processor")

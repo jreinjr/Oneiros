@@ -24,6 +24,10 @@ init_database()
 message_queue = deque(maxlen=100)  # Keep last 100 messages
 message_lock = threading.Lock()
 
+# Global variable to store pending screen text results
+screen_text_queue = deque(maxlen=100)
+screen_text_lock = threading.Lock()
+
 # Initialize message processor
 message_processor_config = {
     'ollama': {
@@ -147,12 +151,41 @@ def listen():
         user_mode = data.get('user_mode')
         screen_mode = data.get('screen_mode')
         
-        # Process message through the message processor
-        def process_message():
-            return run_async(message_processor.process_message(message, user_mode, screen_mode))
+        # Process user response immediately
+        def process_user():
+            return run_async(message_processor.process_user_immediate(message, user_mode))
         
-        # Run in thread pool to avoid blocking
-        result = executor.submit(process_message).result(timeout=30)
+        # Get user response
+        user_result = executor.submit(process_user).result(timeout=30)
+        
+        # Schedule screen text processing asynchronously
+        def process_screen_async():
+            loop = get_or_create_event_loop()
+            # Pass user result and mode for potential reuse
+            task_id = loop.run_until_complete(
+                message_processor.process_screen_async(
+                    message, 
+                    screen_mode, 
+                    user_result['user_response'],
+                    user_mode
+                )
+            )
+            logger.info(f"Screen text processing scheduled with task ID: {task_id}")
+            
+            # Fetch the result and add to the screen text queue when ready
+            if task_id:
+                result = loop.run_until_complete(message_processor.get_task_result(task_id))
+                if result:
+                    # Add to screen text queue for polling
+                    with screen_text_lock:
+                        screen_text_queue.append({
+                            'message': result,
+                            'timestamp': datetime.now().isoformat()
+                        })
+                    logger.info(f"Screen text result ready and queued: {result.get('type')}")
+        
+        # Submit screen processing to run in background (don't wait)
+        executor.submit(process_screen_async)
         
         # Also add to legacy queue for backward compatibility
         with message_lock:
@@ -161,15 +194,10 @@ def listen():
                 'timestamp': datetime.now().isoformat()
             })
         
+        # Return ONLY the user response - no screen_text info
         return jsonify({
             'status': 'success',
-            'user_response': result.user_response,
-            'screen_text': result.screen_text,
-            'task_id': result.task_id,
-            'processing_info': {
-                'user_task_id': result.user_task_id,
-                'screen_task_id': result.screen_task_id
-            }
+            'user_response': user_result['user_response']
         }), 200
         
     except Exception as e:
@@ -247,6 +275,46 @@ def get_screen_text(task_id):
     except Exception as e:
         logger.error(f"Error getting screen text: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/poll-screen-text', methods=['POST'])
+def poll_screen_text():
+    """Poll for screen text results and display them when ready"""
+    try:
+        data = request.get_json()
+        if not data or 'task_id' not in data:
+            return jsonify({'error': 'No task_id provided'}), 400
+        
+        task_id = data['task_id']
+        
+        def get_result():
+            return run_async(message_processor.get_task_result(task_id))
+        
+        result = executor.submit(get_result).result(timeout=0.5)
+        
+        if result is None:
+            return jsonify({
+                'status': 'pending',
+                'task_status': message_processor.get_task_status(task_id)
+            })
+        
+        return jsonify({
+            'status': 'completed',
+            'screen_text': result
+        })
+    except Exception as e:
+        logger.error(f"Error polling screen text: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/screen-messages', methods=['GET'])
+def get_screen_messages():
+    """Get pending screen text messages for display"""
+    with screen_text_lock:
+        messages = list(screen_text_queue)
+        screen_text_queue.clear()
+    
+    return jsonify({
+        'messages': messages
+    })
 
 @app.route('/api/processing-status/<task_id>', methods=['GET'])
 def get_processing_status(task_id):

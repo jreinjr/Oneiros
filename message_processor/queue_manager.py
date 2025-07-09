@@ -190,6 +190,19 @@ class LLMQueueManager:
             "total_results": len(self.results)
         }
     
+    async def _store_result(self, task_id: str, result: Dict[str, Any]):
+        """
+        Store a result directly without going through the queue
+        Used when reusing results or for immediate non-LLM processing
+        
+        Args:
+            task_id: The task ID to store the result under
+            result: The result to store
+        """
+        self.results[task_id] = result
+        self.task_status[task_id] = "completed"
+        logger.info(f"Stored result for task {task_id}")
+    
     def clear_old_results(self, max_age_hours: int = 24):
         """Clear old results to prevent memory buildup"""
         cutoff_time = datetime.now() - timedelta(hours=max_age_hours)

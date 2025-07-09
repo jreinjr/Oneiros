@@ -603,11 +603,51 @@ export class GraphBehaviorController {
 
     /**
      * Add a custom message to the logger
-     * @param {string} message - Message to add to the logger
+     * @param {string|Object} message - Message to add to the logger (string or structured object)
      * @param {string} type - Type of message ('info', 'warning', 'error')
      */
     addLogMessage(message, type = 'info') {
-        if (this.logger) {
+        if (!this.logger) return;
+        
+        // Handle structured message objects from the message processor
+        if (typeof message === 'object' && message.content) {
+            let displayText = message.content;
+            let author = null;
+            
+            // Format based on message type
+            switch(message.type) {
+                case 'quote':
+                    // For quote type, format with author
+                    if (message.author) {
+                        author = message.author;
+                    }
+                    break;
+                case 'llm':
+                    // For LLM generated content, just display as is
+                    break;
+                case 'rag':
+                    // For RAG content, could include context info if desired
+                    if (message.context_author) {
+                        // Optionally show the source quote in a subtle way
+                        // For now, just show the generated content
+                    }
+                    break;
+                case 'echo':
+                    // Echo just displays the content as is
+                    break;
+                default:
+                    // Any other type, display content as is
+                    break;
+            }
+            
+            // Use the logger's quote entry method if we have an author
+            if (author) {
+                this.logger.addQuoteEntry(displayText, author);
+            } else {
+                this.logger.addCustomEntry(displayText, type);
+            }
+        } else {
+            // Backward compatibility for string messages
             this.logger.addCustomEntry(message, type);
         }
     }
