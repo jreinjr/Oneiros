@@ -44,6 +44,23 @@ class MessageProcessor:
         # Initialize handlers
         self._initialize_handlers()
         
+        # Start the queue worker
+        self._start_queue_worker()
+    
+    def _start_queue_worker(self):
+        """Start the LLM queue worker in a separate thread"""
+        try:
+            # Create an event loop for this thread if needed
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            # Start the worker
+            loop.run_until_complete(self.llm_queue.start_worker())
+            
+            logger.info("LLM queue worker started during processor initialization")
+        except Exception as e:
+            logger.error(f"Failed to start LLM queue worker: {e}")
+    
     def _initialize_sentence_model(self) -> Optional[SentenceTransformer]:
         """Initialize sentence transformer model once for all handlers"""
         try:

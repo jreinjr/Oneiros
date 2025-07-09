@@ -47,7 +47,7 @@ class LLMHandler(BaseHandler):
         self.endpoint = ollama_config.get('endpoint', 'http://localhost:11434')
         self.model = ollama_config.get('model', 'llama3.2:1b')
         self.prompt_template = ollama_config.get('prompt_template', 
-            'Write a haiku inspired by the following message: "{message}"')
+            'You are a haiku generation tool. Write a haiku inspired by the following message: "{message}" ONLY return the haiku and NOTHING else, no conversational pleasantries.')
         self.timeout = ollama_config.get('timeout', 30)
         
     async def process(self, message: str) -> Dict[str, Any]:
@@ -203,11 +203,12 @@ class RAGHandler(BaseHandler):
         
         # RAG-specific prompt template
         self.rag_prompt_template = ollama_config.get('rag_prompt_template',
-            'Based on this quote: "{quote}" by {author}, write a haiku that relates to the user\'s message: "{message}"')
+            'You are a haiku generation tool. Write a haiku inspired by the following message: "{message}" ONLY return the haiku and NOTHING else, no conversational pleasantries.')
     
     async def process(self, message: str) -> Dict[str, Any]:
         """Process message using RAG: vector search + LLM"""
         try:
+            print(message)
             # First, get the most similar quote
             quote_result = await self.quote_handler.process(message)
             
@@ -217,9 +218,7 @@ class RAGHandler(BaseHandler):
             
             # Use quote as context for LLM
             rag_prompt = self.rag_prompt_template.format(
-                quote=quote_result['content'],
-                author=quote_result['author'],
-                message=message
+                message=quote_result['content']
             )
             
             # Temporarily override the LLM prompt template

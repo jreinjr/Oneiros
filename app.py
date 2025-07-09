@@ -32,10 +32,10 @@ screen_text_lock = threading.Lock()
 message_processor_config = {
     'ollama': {
         'endpoint': 'http://localhost:11434',
-        'model': 'llama3.2:3b',
+        'model': 'llama3.2:1b',
         'timeout': 30,
-        'prompt_template': 'Write a haiku inspired by the following message: "{message}"',
-        'rag_prompt_template': 'Based on this quote: "{quote}" by {author}, write a haiku that relates to the user\'s message: "{message}"'
+        'prompt_template': 'You are a haiku generation tool. Write a haiku inspired by the following message: "{message}" ONLY return the haiku and NOTHING else, no conversational pleasantries.',
+        'rag_prompt_template': 'You are a haiku generation tool. Write a haiku inspired by the following message: "{message}" ONLY return the haiku and NOTHING else, no conversational pleasantries.'
     },
     'neo4j': {
         'uri': os.getenv('NEO4J_URI', 'neo4j://127.0.0.1:7687'),

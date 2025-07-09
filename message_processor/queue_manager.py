@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 import uuid
 from datetime import datetime, timedelta
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -43,28 +45,40 @@ class LLMQueueManager:
     """Manages LLM processing queue with priority handling"""
     
     def __init__(self):
-        self.queue = asyncio.PriorityQueue()
+        # We'll create the queue later in the worker thread's event loop
+        self.queue = None
         self.processing = False
         self.current_task: Optional[LLMTask] = None
         self.results: Dict[str, Any] = {}
         self.task_status: Dict[str, str] = {}
-        self.worker_task: Optional[asyncio.Task] = None
+        self.worker_thread: Optional[threading.Thread] = None
+        self.worker_loop: Optional[asyncio.AbstractEventLoop] = None
+        self.stop_event = threading.Event()
+        self.executor = ThreadPoolExecutor(max_workers=1)
+        self._started = False
+        self._queue_ready = threading.Event()
+        # Thread-safe task storage
+        self._pending_tasks = []
+        self._tasks_lock = threading.Lock()
         
     async def start_worker(self):
-        """Start the background worker task"""
-        if self.worker_task is None or self.worker_task.done():
-            self.worker_task = asyncio.create_task(self._worker())
-            logger.info("LLM queue worker started")
+        """Start the background worker thread"""
+        if not self._started or (self.worker_thread and not self.worker_thread.is_alive()):
+            self.stop_event.clear()
+            self.worker_thread = threading.Thread(target=self._run_worker_thread)
+            self.worker_thread.daemon = True
+            self.worker_thread.start()
+            self._started = True
+            logger.info("LLM queue worker thread started")
     
     async def stop_worker(self):
-        """Stop the background worker task"""
-        if self.worker_task and not self.worker_task.done():
-            self.worker_task.cancel()
-            try:
-                await self.worker_task
-            except asyncio.CancelledError:
-                pass
-            logger.info("LLM queue worker stopped")
+        """Stop the background worker thread"""
+        if self.worker_thread and self.worker_thread.is_alive():
+            self.stop_event.set()
+            # Give the thread a moment to stop
+            await asyncio.sleep(0.1)
+            self._started = False
+            logger.info("LLM queue worker thread stopped")
     
     async def submit_task(self, message: str, handler: Callable, priority: Priority = Priority.SCREEN_TEXT, callback: Optional[Callable] = None) -> str:
         """
@@ -89,20 +103,28 @@ class LLMQueueManager:
         )
         
         self.task_status[task_id] = "queued"
-        await self.queue.put(task)
         
-        # Ensure worker is running
-        try:
-            await self.start_worker()
-        except RuntimeError as e:
-            if "no running event loop" in str(e):
-                # Create a new event loop if none exists
-                import asyncio
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                await self.start_worker()
-            else:
-                raise
+        # Ensure worker is running first
+        await self.start_worker()
+        
+        # Wait for queue to be ready
+        if not self._queue_ready.wait(timeout=5.0):
+            logger.error("Queue not ready after 5 seconds")
+            self.task_status[task_id] = "failed"
+            self.results[task_id] = {"error": "Queue initialization timeout"}
+            return task_id
+        
+        # Add task to pending tasks list (thread-safe)
+        with self._tasks_lock:
+            self._pending_tasks.append(task)
+        
+        # If we have a worker loop, schedule the task addition
+        if self.worker_loop and not self.worker_loop.is_closed():
+            async def add_to_queue():
+                await self.queue.put(task)
+            
+            # Schedule the task addition in the worker's event loop
+            asyncio.run_coroutine_threadsafe(add_to_queue(), self.worker_loop)
         
         logger.info(f"Task {task_id} queued with priority {priority.name}")
         return task_id
@@ -140,16 +162,52 @@ class LLMQueueManager:
         
         return None
     
+    def _run_worker_thread(self):
+        """Run the worker in a separate thread with its own event loop"""
+        # Create a new event loop for this thread
+        self.worker_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.worker_loop)
+        
+        try:
+            # Run the async worker in this thread's event loop
+            self.worker_loop.run_until_complete(self._worker())
+        except Exception as e:
+            logger.error(f"Worker thread error: {e}")
+        finally:
+            self.worker_loop.close()
+            self.worker_loop = None
+    
     async def _worker(self):
         """Background worker that processes tasks from the queue"""
         logger.info("LLM queue worker started processing")
         
-        while True:
+        # Initialize queue in this event loop
+        self.queue = asyncio.PriorityQueue()
+        self._queue_ready.set()
+        
+        # Process any pending tasks that were submitted before queue was ready
+        with self._tasks_lock:
+            for task in self._pending_tasks:
+                await self.queue.put(task)
+            self._pending_tasks.clear()
+        
+        while not self.stop_event.is_set():
             try:
-                # Get next task from queue
-                task = await self.queue.get()
+                # Check for new pending tasks
+                with self._tasks_lock:
+                    for task in self._pending_tasks:
+                        await self.queue.put(task)
+                    self._pending_tasks.clear()
+                
+                # Try to get a task with a timeout
+                try:
+                    task = await asyncio.wait_for(self.queue.get(), timeout=1.0)
+                except asyncio.TimeoutError:
+                    continue  # Check stop_event and try again
+                
                 self.current_task = task
                 self.task_status[task.task_id] = "processing"
+                self.processing = True
                 
                 logger.info(f"Processing task {task.task_id} with priority {task.priority.name}")
                 
@@ -161,7 +219,10 @@ class LLMQueueManager:
                     
                     # Call callback if provided
                     if task.callback:
-                        await task.callback(task.task_id, result)
+                        try:
+                            await task.callback(task.task_id, result)
+                        except Exception as cb_error:
+                            logger.error(f"Callback error for task {task.task_id}: {cb_error}")
                         
                     logger.info(f"Task {task.task_id} completed successfully")
                     
@@ -172,19 +233,19 @@ class LLMQueueManager:
                 
                 finally:
                     self.current_task = None
+                    self.processing = False
                     self.queue.task_done()
                     
-            except asyncio.CancelledError:
-                logger.info("LLM queue worker cancelled")
-                break
             except Exception as e:
                 logger.error(f"Error in LLM queue worker: {e}")
                 await asyncio.sleep(1)  # Brief pause before retrying
+        
+        logger.info("LLM queue worker stopped")
     
     def get_queue_info(self) -> Dict[str, Any]:
         """Get information about the current queue state"""
         return {
-            "queue_size": self.queue.qsize(),
+            "queue_size": self.queue.qsize() if self.queue else 0,
             "processing": self.processing,
             "current_task": self.current_task.task_id if self.current_task else None,
             "total_results": len(self.results)
