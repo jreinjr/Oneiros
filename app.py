@@ -174,7 +174,8 @@ def listen():
             
             # Fetch the result and add to the screen text queue when ready
             if task_id:
-                result = loop.run_until_complete(message_processor.get_task_result(task_id))
+                # Wait for the result with timeout (important for RAG processing)
+                result = loop.run_until_complete(message_processor.wait_for_result(task_id, timeout=30.0))
                 if result:
                     # Add to screen text queue for polling
                     with screen_text_lock:
@@ -183,6 +184,8 @@ def listen():
                             'timestamp': datetime.now().isoformat()
                         })
                     logger.info(f"Screen text result ready and queued: {result.get('type')}")
+                else:
+                    logger.warning(f"Screen text task {task_id} timed out or failed")
         
         # Submit screen processing to run in background (don't wait)
         executor.submit(process_screen_async)

@@ -208,7 +208,6 @@ class RAGHandler(BaseHandler):
     async def process(self, message: str) -> Dict[str, Any]:
         """Process message using RAG: vector search + LLM"""
         try:
-            print(message)
             # First, get the most similar quote
             quote_result = await self.quote_handler.process(message)
             

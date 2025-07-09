@@ -189,6 +189,10 @@ class MessageProcessor:
         """Get the result of a specific task"""
         return await self.llm_queue.get_result(task_id)
     
+    async def wait_for_result(self, task_id: str, timeout: float = 30.0) -> Optional[Dict[str, Any]]:
+        """Wait for a task to complete and return its result"""
+        return await self.llm_queue.wait_for_result(task_id, timeout)
+    
     def get_task_status(self, task_id: str) -> str:
         """Get the status of a specific task"""
         return self.llm_queue.get_task_status(task_id)
