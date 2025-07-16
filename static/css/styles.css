@@ -220,6 +220,38 @@ input[type="checkbox"] {
     border-color: #F44336;
 }
 
+/* Camera mode toggle buttons */
+.camera-mode-toggle {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 3px;
+}
+
+.camera-mode-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: #ccc;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.camera-mode-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.camera-mode-btn.active {
+    background: rgba(76, 175, 80, 0.8);
+    color: #fff;
+    font-weight: 600;
+}
+
 /* Processing mode toggle buttons */
 .processing-mode-toggle {
     display: flex;

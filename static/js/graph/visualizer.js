@@ -3,6 +3,8 @@
  * Handles 3D Force Graph setup and visual management
  */
 
+import { CameraAnimator } from './camera-animator.js';
+
 /**
  * 3D Graph Visualizer class
  */
@@ -21,6 +23,10 @@ export class GraphVisualizer {
         // Event callbacks
         this.onNodeClick = null;
         this.onNodeHover = null;
+        
+        // Camera animator
+        this.cameraAnimator = null;
+        this.animationFrameId = null;
         
         this.initialize();
     }
@@ -53,6 +59,49 @@ export class GraphVisualizer {
                     this.onNodeHover(node, prevNode);
                 }
             });
+            
+        // Initialize camera animator after graph is ready
+        this.initializeCameraAnimator();
+        
+        // Start animation loop
+        this.startAnimationLoop();
+    }
+    
+    /**
+     * Initialize camera animator
+     */
+    initializeCameraAnimator() {
+        if (this.graph) {
+            // Pass node click handler to camera animator
+            this.cameraAnimator = new CameraAnimator(this.graph, this.config, (node) => {
+                if (this.onNodeClick) {
+                    this.onNodeClick(node, null);
+                }
+            });
+        }
+    }
+    
+    /**
+     * Start the animation loop
+     */
+    startAnimationLoop() {
+        const animate = (time) => {
+            if (this.cameraAnimator) {
+                this.cameraAnimator.update(time);
+            }
+            this.animationFrameId = requestAnimationFrame(animate);
+        };
+        this.animationFrameId = requestAnimationFrame(animate);
+    }
+    
+    /**
+     * Stop the animation loop
+     */
+    stopAnimationLoop() {
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
     }
 
     /**
@@ -339,6 +388,11 @@ export class GraphVisualizer {
      */
     focusCameraOnNode(node, distance = null, duration = null) {
         if (!node || !this.graph) return;
+        
+        // If dreaming mode is active, don't use the default focus behavior
+        if (this.config.get('dreamingModeEnabled')) {
+            return;
+        }
 
         // Use config values if not provided
         const cameraDistance = distance || this.config.get('cameraDistance');
@@ -359,11 +413,77 @@ export class GraphVisualizer {
             animationDuration // ms transition duration
         );
     }
+    
+    /**
+     * Start dreaming mode
+     */
+    startDreamingMode() {
+        if (this.cameraAnimator) {
+            this.cameraAnimator.startDreamMode();
+        }
+    }
+    
+    /**
+     * Stop dreaming mode
+     */
+    stopDreamingMode() {
+        if (this.cameraAnimator) {
+            this.cameraAnimator.stopDreamMode();
+        }
+    }
+    
+    /**
+     * Start haiku mode (orbit center)
+     */
+    startHaikuMode() {
+        if (this.cameraAnimator) {
+            this.cameraAnimator.startHaikuMode();
+        }
+    }
+    
+    /**
+     * Enable or disable manual camera controls
+     * @param {boolean} enabled - Whether to enable manual controls
+     */
+    enableManualControls(enabled) {
+        if (this.graph) {
+            this.graph.enableNavigationControls(enabled);
+            if (!enabled && this.graph.controls()) {
+                // Reset any ongoing manual control movements
+                this.graph.controls().reset();
+            }
+            
+            // Update camera animator mode
+            if (this.cameraAnimator && enabled) {
+                this.cameraAnimator.setManualMode();
+            }
+        }
+    }
+    
+    /**
+     * Update camera animator configuration
+     * @param {string} key - Configuration key
+     * @param {*} value - New value
+     */
+    updateCameraAnimatorConfig(key, value) {
+        if (this.cameraAnimator) {
+            this.cameraAnimator.updateConfig(key, value);
+        }
+    }
 
     /**
      * Dispose of the visualizer and clean up resources
      */
     dispose() {
+        // Stop animation loop
+        this.stopAnimationLoop();
+        
+        // Dispose camera animator
+        if (this.cameraAnimator) {
+            this.cameraAnimator.dispose();
+            this.cameraAnimator = null;
+        }
+        
         if (this.graph) {
             // Clean up any resources if needed
             this.graph = null;

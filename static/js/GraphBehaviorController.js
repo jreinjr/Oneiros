@@ -183,6 +183,19 @@ export class GraphBehaviorController {
         this.controls.setCallback('nodePopupEnabled', (controlId, value) => {
             this.handleNodePopupToggle(value);
         });
+        
+        // Camera mode callbacks
+        this.controls.setCallback('cameraModeChanged', (controlId, mode) => {
+            this.handleCameraModeChange(mode);
+        });
+        
+        // Dreaming mode parameter callbacks
+        ['dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitSpeed', 
+         'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed'].forEach(param => {
+            this.controls.setCallback(param, (controlId, value) => {
+                this.visualizer.updateCameraAnimatorConfig(controlId, value);
+            });
+        });
 
         // Message processing mode callbacks
         this.controls.setCallback('userResponseModeChanged', (controlId, value) => {
@@ -487,6 +500,28 @@ export class GraphBehaviorController {
         if (this.popup) {
             this.popup.updateColors();
         }
+    }
+
+    /**
+     * Handle camera mode change
+     * @param {string} mode - Camera mode (manual, dreaming, haiku)
+     */
+    handleCameraModeChange(mode) {
+        switch(mode) {
+            case 'manual':
+                this.visualizer.stopDreamingMode();
+                this.visualizer.enableManualControls(true);
+                break;
+            case 'dreaming':
+                this.visualizer.enableManualControls(false);
+                this.visualizer.startDreamingMode();
+                break;
+            case 'haiku':
+                this.visualizer.enableManualControls(false);
+                this.visualizer.startHaikuMode();
+                break;
+        }
+        console.log(`Camera mode changed to: ${mode}`);
     }
 
     /**

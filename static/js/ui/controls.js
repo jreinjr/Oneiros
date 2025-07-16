@@ -24,6 +24,7 @@ export class ControlsManager {
         this.setupCheckboxes();
         this.setupColorControls();
         this.setupProcessingModeControls();
+        this.setupCameraModeControls();
         this.setupConfigListeners();
     }
 
@@ -34,7 +35,9 @@ export class ControlsManager {
         const sliders = [
             'nodeCount', 'connectionDensity',
             'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps',
-            'messageDuration', 'typingSpeed', 'logPanelScale'
+            'messageDuration', 'typingSpeed', 'logPanelScale',
+            'dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitSpeed',
+            'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed'
         ];
 
         sliders.forEach(id => {
@@ -385,6 +388,53 @@ export class ControlsManager {
      */
     getScreenTextMode() {
         return this.config.get('screenTextMode') || 'echo';
+    }
+
+    /**
+     * Setup camera mode controls
+     */
+    setupCameraModeControls() {
+        const cameraModeButtons = document.querySelectorAll('.camera-mode-toggle .camera-mode-btn');
+        if (cameraModeButtons.length > 0) {
+            this.elements.set('cameraModeButtons', cameraModeButtons);
+            
+            // Set initial active state
+            const currentCameraMode = this.config.get('cameraMode') || 'manual';
+            cameraModeButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === currentCameraMode);
+                btn.addEventListener('click', () => {
+                    this.setCameraMode(btn.dataset.mode);
+                });
+            });
+        }
+    }
+
+    /**
+     * Set camera mode
+     * @param {string} mode - Camera mode (manual, dreaming, haiku)
+     */
+    setCameraMode(mode) {
+        // Update config
+        this.config.set('cameraMode', mode);
+        
+        // Update UI
+        const buttons = this.elements.get('cameraModeButtons');
+        if (buttons) {
+            buttons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+        }
+        
+        // Trigger callback
+        this.triggerCallback('cameraModeChanged', mode);
+    }
+
+    /**
+     * Get current camera mode
+     * @returns {string} Current camera mode
+     */
+    getCameraMode() {
+        return this.config.get('cameraMode') || 'manual';
     }
 
     /**
