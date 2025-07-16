@@ -37,6 +37,9 @@ export class GraphBehaviorController {
      */
     async initialize() {
         try {
+            // Load saved settings from JSON first
+            await this.config.loadAllSettings();
+            
             // Initialize visualizer
             this.visualizer = new GraphVisualizer('3d-graph', this.config);
             
@@ -44,6 +47,9 @@ export class GraphBehaviorController {
             this.controls = new ControlsManager(this.config);
             this.popup = new PopupManager(this.visualizer, this.config);
             this.logger = new LoggerManager(this.config);
+            
+            // Update all controls to match loaded settings
+            this.controls.updateAllControlsFromConfig();
             
             // Set up event handlers
             this.setupEventHandlers();
@@ -151,6 +157,9 @@ export class GraphBehaviorController {
     async setTheme(theme) {
         // Update config
         this.config.set('currentTheme', theme);
+        
+        // Save all settings including the new theme
+        await this.config.saveAllSettings();
         
         // Sync theme with server
         try {

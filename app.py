@@ -539,6 +539,48 @@ def save_palette(theme):
         logger.error(f"Error saving palette: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/control-settings', methods=['GET'])
+def get_control_settings():
+    """Get all control panel settings"""
+    try:
+        settings_file = os.path.join(app.root_path, 'data', 'settings.json')
+        
+        if os.path.exists(settings_file):
+            with open(settings_file, 'r') as f:
+                settings = json.load(f)
+            return jsonify(settings)
+        else:
+            # Return empty object if file doesn't exist
+            return jsonify({})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/control-settings', methods=['POST'])
+def save_control_settings():
+    """Save all control panel settings"""
+    try:
+        # Get settings data
+        data = request.json
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'No settings data provided'
+            }), 400
+        
+        # Create data directory if it doesn't exist
+        data_dir = os.path.join(app.root_path, 'data')
+        os.makedirs(data_dir, exist_ok=True)
+        
+        # Save to JSON file
+        settings_file = os.path.join(data_dir, 'settings.json')
+        
+        with open(settings_file, 'w') as f:
+            json.dump(data, f, indent=2)
+        
+        return jsonify({'success': True, 'message': 'Settings saved successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.errorhandler(404)
 def page_not_found(e):
     """404 error handler"""

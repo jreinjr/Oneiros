@@ -352,6 +352,206 @@ export class ConfigManager {
     }
 
     /**
+     * Save all settings to JSON file
+     */
+    async saveAllSettings() {
+        try {
+            // Get all current settings
+            const settings = {
+                // Graph Configuration
+                nodeCount: this.get('nodeCount'),
+                connectionDensity: this.get('connectionDensity'),
+                nodeSize: this.get('nodeSize'),
+                nodeDistance: this.get('nodeDistance'),
+                
+                // Message Processing
+                userResponseMode: this.get('userResponseMode'),
+                screenTextMode: this.get('screenTextMode'),
+                
+                // Highlighting Controls
+                connectionThickness: this.get('connectionThickness'),
+                highlightSteps: this.get('highlightSteps'),
+                defaultEdgeWeight: this.get('defaultEdgeWeight'),
+                runtimeEdgeWeight: this.get('runtimeEdgeWeight'),
+                incrementalEdgeWeight: this.get('incrementalEdgeWeight'),
+                
+                // Logger Settings
+                poetryLogEnabled: this.get('poetryLogEnabled'),
+                nodePopupEnabled: this.get('nodePopupEnabled'),
+                popupOffsetX: this.get('popupOffsetX'),
+                popupOffsetY: this.get('popupOffsetY'),
+                logPanelScale: this.get('logPanelScale'),
+                messageDuration: this.get('messageDuration'),
+                typingSpeed: this.get('typingSpeed'),
+                overlayOpacity: this.get('overlayOpacity'),
+                
+                // Camera Mode Settings
+                cameraMode: this.get('cameraMode'),
+                dreamOrbitRadius: this.get('dreamOrbitRadius'),
+                dreamOrbitDuration: this.get('dreamOrbitDuration'),
+                dreamOrbitSpeed: this.get('dreamOrbitSpeed'),
+                dreamTransitionDuration: this.get('dreamTransitionDuration'),
+                haikuOrbitRadius: this.get('haikuOrbitRadius'),
+                haikuOrbitSpeed: this.get('haikuOrbitSpeed'),
+                haikuTransitionDuration: this.get('haikuTransitionDuration'),
+                cameraTargetX: this.get('cameraTargetX'),
+                cameraTargetY: this.get('cameraTargetY'),
+                
+                // Theme
+                currentTheme: this.get('currentTheme'),
+                
+                // Note: Colors are saved separately per theme
+                timestamp: new Date().toISOString()
+            };
+
+            const response = await fetch('/api/control-settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to save settings: ${response.statusText}`);
+            }
+            
+            console.log('Settings saved successfully');
+            
+            // Also save to localStorage as fallback
+            localStorage.setItem('oneiros_settings', JSON.stringify(settings));
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            // Fall back to localStorage only
+            const settings = this.getAllSettingsForSave();
+            localStorage.setItem('oneiros_settings', JSON.stringify(settings));
+        }
+    }
+
+    /**
+     * Load all settings from JSON file
+     */
+    async loadAllSettings() {
+        try {
+            const response = await fetch('/api/control-settings');
+            
+            if (response.ok) {
+                const settings = await response.json();
+                
+                // Apply loaded settings
+                if (Object.keys(settings).length > 0) {
+                    this.applyLoadedSettings(settings);
+                    console.log('Settings loaded from server');
+                    return true;
+                }
+            }
+            
+            // Try localStorage fallback
+            const localSettings = localStorage.getItem('oneiros_settings');
+            if (localSettings) {
+                const settings = JSON.parse(localSettings);
+                this.applyLoadedSettings(settings);
+                console.log('Settings loaded from localStorage');
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            console.error('Error loading settings:', error);
+            
+            // Try localStorage fallback
+            try {
+                const localSettings = localStorage.getItem('oneiros_settings');
+                if (localSettings) {
+                    const settings = JSON.parse(localSettings);
+                    this.applyLoadedSettings(settings);
+                    console.log('Settings loaded from localStorage (fallback)');
+                    return true;
+                }
+            } catch (localError) {
+                console.error('Error loading settings from localStorage:', localError);
+            }
+            
+            return false;
+        }
+    }
+
+    /**
+     * Get all settings for saving
+     * @returns {Object} Settings object
+     */
+    getAllSettingsForSave() {
+        return {
+            // Graph Configuration
+            nodeCount: this.get('nodeCount'),
+            connectionDensity: this.get('connectionDensity'),
+            nodeSize: this.get('nodeSize'),
+            nodeDistance: this.get('nodeDistance'),
+            
+            // Message Processing
+            userResponseMode: this.get('userResponseMode'),
+            screenTextMode: this.get('screenTextMode'),
+            
+            // Highlighting Controls
+            connectionThickness: this.get('connectionThickness'),
+            highlightSteps: this.get('highlightSteps'),
+            defaultEdgeWeight: this.get('defaultEdgeWeight'),
+            runtimeEdgeWeight: this.get('runtimeEdgeWeight'),
+            incrementalEdgeWeight: this.get('incrementalEdgeWeight'),
+            
+            // Logger Settings
+            poetryLogEnabled: this.get('poetryLogEnabled'),
+            nodePopupEnabled: this.get('nodePopupEnabled'),
+            popupOffsetX: this.get('popupOffsetX'),
+            popupOffsetY: this.get('popupOffsetY'),
+            logPanelScale: this.get('logPanelScale'),
+            messageDuration: this.get('messageDuration'),
+            typingSpeed: this.get('typingSpeed'),
+            overlayOpacity: this.get('overlayOpacity'),
+            
+            // Camera Mode Settings
+            cameraMode: this.get('cameraMode'),
+            dreamOrbitRadius: this.get('dreamOrbitRadius'),
+            dreamOrbitDuration: this.get('dreamOrbitDuration'),
+            dreamOrbitSpeed: this.get('dreamOrbitSpeed'),
+            dreamTransitionDuration: this.get('dreamTransitionDuration'),
+            haikuOrbitRadius: this.get('haikuOrbitRadius'),
+            haikuOrbitSpeed: this.get('haikuOrbitSpeed'),
+            haikuTransitionDuration: this.get('haikuTransitionDuration'),
+            cameraTargetX: this.get('cameraTargetX'),
+            cameraTargetY: this.get('cameraTargetY'),
+            
+            // Theme
+            currentTheme: this.get('currentTheme'),
+            
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    /**
+     * Apply loaded settings to configuration
+     * @param {Object} settings - Settings object
+     */
+    applyLoadedSettings(settings) {
+        // Don't notify during bulk update to avoid performance issues
+        const notify = false;
+        
+        // Apply each setting if it exists
+        Object.entries(settings).forEach(([key, value]) => {
+            // Skip timestamp and other non-config keys
+            if (key === 'timestamp') return;
+            
+            // Only set if the value exists in loaded settings
+            if (value !== undefined && value !== null) {
+                this.set(key, value, notify);
+            }
+        });
+        
+        // Trigger a single notification after all settings are applied
+        this._notifyListeners('settingsLoaded', settings);
+    }
+
+    /**
      * Add configuration change listener
      * @param {string} key - Configuration key to listen for
      * @param {Function} callback - Callback function (key, newValue, oldValue)

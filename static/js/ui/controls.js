@@ -30,12 +30,16 @@ export class ControlsManager {
         this.elements = new Map();
         this.callbacks = new Map();
         
-        // Create debounced save function
+        // Create debounced save functions
         this.debouncedSavePalette = debounce(() => {
             const currentTheme = this.config.get('currentTheme');
             if (currentTheme) {
                 this.config.saveThemeColors(currentTheme);
             }
+        }, 500); // 500ms debounce
+        
+        this.debouncedSaveSettings = debounce(() => {
+            this.config.saveAllSettings();
         }, 500); // 500ms debounce
         
         this.initialize();
@@ -112,6 +116,9 @@ export class ControlsManager {
                 
                 // Trigger specific callbacks
                 this.triggerCallback(id, value);
+                
+                // Auto-save settings with debouncing
+                this.debouncedSaveSettings();
             });
         });
     }
@@ -170,6 +177,9 @@ export class ControlsManager {
                 
                 // Trigger specific callbacks
                 this.triggerCallback(id, value);
+                
+                // Auto-save settings with debouncing
+                this.debouncedSaveSettings();
             });
         });
     }
@@ -324,6 +334,88 @@ export class ControlsManager {
     }
 
     /**
+     * Update all controls from configuration
+     */
+    updateAllControlsFromConfig() {
+        // Update sliders
+        const sliders = [
+            'nodeCount', 'connectionDensity',
+            'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps',
+            'messageDuration', 'typingSpeed', 'logPanelScale', 'overlayOpacity',
+            'dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitSpeed',
+            'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed',
+            'haikuTransitionDuration', 'popupOffsetX', 'popupOffsetY', 'cameraTargetX', 'cameraTargetY',
+            'defaultEdgeWeight', 'runtimeEdgeWeight', 'incrementalEdgeWeight'
+        ];
+
+        sliders.forEach(id => {
+            const elements = this.elements.get(id);
+            if (elements && elements.slider && elements.valueDisplay) {
+                const value = this.config.get(id);
+                if (value !== undefined && value !== null) {
+                    elements.slider.value = value;
+                    elements.valueDisplay.textContent = value;
+                    
+                    // Handle special cases
+                    if (id === 'logPanelScale') {
+                        this.updateLogPanelScale(value);
+                    } else if (id === 'overlayOpacity') {
+                        this.updateOverlayOpacity(value);
+                    }
+                }
+            }
+        });
+
+        // Update checkboxes
+        const checkboxes = ['poetryLogEnabled', 'nodePopupEnabled'];
+        checkboxes.forEach(id => {
+            const checkbox = this.elements.get(id);
+            if (checkbox) {
+                const value = this.config.get(id);
+                if (value !== undefined) {
+                    checkbox.checked = value;
+                }
+            }
+        });
+
+        // Update processing mode buttons
+        const userResponseMode = this.config.get('userResponseMode');
+        const userModeButtons = this.elements.get('userResponseModeButtons');
+        if (userModeButtons && userResponseMode) {
+            userModeButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === userResponseMode);
+            });
+        }
+
+        const screenTextMode = this.config.get('screenTextMode');
+        const screenModeButtons = this.elements.get('screenTextModeButtons');
+        if (screenModeButtons && screenTextMode) {
+            screenModeButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === screenTextMode);
+            });
+        }
+
+        // Update camera mode buttons
+        const cameraMode = this.config.get('cameraMode');
+        const cameraModeButtons = this.elements.get('cameraModeButtons');
+        if (cameraModeButtons && cameraMode) {
+            cameraModeButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === cameraMode);
+            });
+        }
+
+        // Update theme buttons
+        const currentTheme = this.config.get('currentTheme');
+        const themeButtons = document.querySelectorAll('.theme-btn');
+        themeButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.theme === currentTheme);
+        });
+
+        // Update colors
+        this.updateColorControlsFromConfig();
+    }
+
+    /**
      * Setup processing mode controls
      */
     setupProcessingModeControls() {
@@ -376,6 +468,9 @@ export class ControlsManager {
         
         // Trigger callback
         this.triggerCallback('userResponseModeChanged', mode);
+        
+        // Auto-save settings with debouncing
+        this.debouncedSaveSettings();
     }
 
     /**
@@ -396,6 +491,9 @@ export class ControlsManager {
         
         // Trigger callback
         this.triggerCallback('screenTextModeChanged', mode);
+        
+        // Auto-save settings with debouncing
+        this.debouncedSaveSettings();
     }
 
     /**
@@ -451,6 +549,9 @@ export class ControlsManager {
         
         // Trigger callback
         this.triggerCallback('cameraModeChanged', mode);
+        
+        // Auto-save settings with debouncing
+        this.debouncedSaveSettings();
     }
 
     /**
