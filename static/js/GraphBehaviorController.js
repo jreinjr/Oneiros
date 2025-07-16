@@ -745,18 +745,25 @@ export class GraphBehaviorController {
             // Check for metadata containing node IDs for runtime edges
             if (message.metadata && message.metadata.nodes && message.metadata.nodes.length >= 2) {
                 const nodeIds = message.metadata.nodes;
-                if (this.visualizer) {
-                    // Convert string IDs to numbers to match Neo4j node IDs
-                    const id1 = parseInt(nodeIds[0], 10);
-                    const id2 = parseInt(nodeIds[1], 10);
+                if (this.visualizer && window.neo4jIdMapping) {
+                    // Convert original_ids to graph node IDs using the global mapping
+                    const originalId1 = nodeIds[0];
+                    const originalId2 = nodeIds[1];
                     
-                    if (!isNaN(id1) && !isNaN(id2)) {
-                        // Create runtime edge between the two quotes
-                        this.visualizer.addRuntimeEdge(id1, id2);
-                        console.log(`Added runtime edge between nodes ${id1} and ${id2}`);
+                    // Look up the actual graph node IDs from the mapping
+                    const graphId1 = window.neo4jIdMapping.originalToId[originalId1];
+                    const graphId2 = window.neo4jIdMapping.originalToId[originalId2];
+                    
+                    if (graphId1 && graphId2) {
+                        // Create runtime edge between the two quotes using graph node IDs
+                        this.visualizer.addRuntimeEdge(graphId1, graphId2);
+                        console.log(`Added runtime edge between nodes ${graphId1} and ${graphId2} (original IDs: ${originalId1}, ${originalId2})`);
                     } else {
-                        console.warn(`Invalid node IDs for runtime edge: ${nodeIds[0]}, ${nodeIds[1]}`);
+                        console.warn(`Could not find graph node IDs for original IDs: ${originalId1}, ${originalId2}`);
+                        console.warn(`Mapping available: ${!!window.neo4jIdMapping.originalToId[originalId1]}, ${!!window.neo4jIdMapping.originalToId[originalId2]}`);
                     }
+                } else if (!window.neo4jIdMapping) {
+                    console.warn('Neo4j ID mapping not available');
                 }
             }
             

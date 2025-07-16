@@ -3,6 +3,12 @@
  * Handles connection and queries to Neo4j database
  */
 
+// Global mapping between original_id and graph node id
+window.neo4jIdMapping = {
+    originalToId: {},  // Maps original_id -> node.id (Neo4j ID)
+    idToOriginal: {}   // Maps node.id (Neo4j ID) -> original_id
+};
+
 /**
  * Fetch Neo4j configuration from server
  * @returns {Promise<Object>} Neo4j config
@@ -46,6 +52,10 @@ export async function fetchBeliefGraph(tagFilter = null) {
     const session = driver.session();
     
     try {
+        // Clear previous mappings
+        window.neo4jIdMapping.originalToId = {};
+        window.neo4jIdMapping.idToOriginal = {};
+        
         // Build query based on whether we're filtering by tag
         let quotesQuery = `MATCH (q:Quote)`;
         if (tagFilter) {
@@ -70,44 +80,34 @@ export async function fetchBeliefGraph(tagFilter = null) {
             relationshipsQuery += ` AND id(q1) IN $nodeIds AND id(q2) IN $nodeIds`;
         }
         
-        // Return original_id if available, otherwise Neo4j ID
+        // Return Neo4j IDs for relationships
         relationshipsQuery += ` 
-            RETURN COALESCE(q1.original_id, id(q1)) as source, 
-                   COALESCE(q2.original_id, id(q2)) as target,
-                   q1.original_id as source_original,
-                   q2.original_id as target_original,
-                   id(q1) as source_neo4j,
-                   id(q2) as target_neo4j`;
+            RETURN id(q1) as source, 
+                   id(q2) as target`;
         
-        console.log('Relationship query:', relationshipsQuery);
         const relationshipsResult = await session.run(relationshipsQuery, tagFilter ? { nodeIds } : {});
         
         const quotes = quotesResult.records.map(record => record.get('q'));
         const relationships = relationshipsResult.records.map(record => ({
-            source: record.get('source'),
-            target: record.get('target'),
-            // Debug fields
-            source_original: record.get('source_original'),
-            target_original: record.get('target_original'),
-            source_neo4j: record.get('source_neo4j'),
-            target_neo4j: record.get('target_neo4j')
+            source: record.get('source').toNumber(),
+            target: record.get('target').toNumber()
         }));
-        
-        // Debug logging
-        console.log(`Raw relationships from Neo4j: ${relationshipsResult.records.length}`);
-        console.log('First 5 relationships with debug info:', relationships.slice(0, 5));
         
         // Transform Neo4j nodes to visualization format
         const nodes = quotes.map(quote => {
-            const originalId = quote.properties.original_id;
             const neo4jId = quote.identity.toNumber();
-            const nodeId = originalId || neo4jId;
+            const originalId = quote.properties.original_id;
+            
+            // Build ID mappings
+            if (originalId) {
+                window.neo4jIdMapping.originalToId[originalId] = neo4jId;
+                window.neo4jIdMapping.idToOriginal[neo4jId] = originalId;
+            }
             
             return {
-                // Use original_id if available, otherwise fall back to Neo4j identity
-                id: nodeId,
-                neo4j_id: neo4jId, // Keep Neo4j ID for internal use
-                original_id: originalId, // Keep original ID for debugging
+                // Always use Neo4j ID as the primary node ID
+                id: neo4jId,
+                original_id: originalId, // Store original_id as a property
                 quote: quote.properties.text || quote.properties.quote || 'No text available',
                 author: quote.properties.author_name || quote.properties.author || 'Unknown',
                 tags: quote.properties.tags || [],
@@ -116,68 +116,21 @@ export async function fetchBeliefGraph(tagFilter = null) {
             };
         });
         
-        // Log ID distribution for debugging
-        const hasOriginalId = nodes.filter(n => n.original_id).length;
-        console.log(`Nodes with original_id: ${hasOriginalId}/${nodes.length}`);
-        
-        // Log first few node IDs for debugging
-        console.log('First 5 nodes:', nodes.slice(0, 5).map(n => ({
-            id: n.id,
-            neo4j_id: n.neo4j_id,
-            original_id: n.original_id,
-            id_type: typeof n.id
-        })));
-        
-        // Create a map for quick node lookup by both original_id and neo4j_id
+        // Create a map for quick node lookup by Neo4j ID
         const nodeMap = new Map();
-        const nodeByNeo4jId = new Map();
-        
         nodes.forEach(node => {
-            // Add both the ID and its string version to handle type mismatches
             nodeMap.set(node.id, node);
-            nodeMap.set(String(node.id), node);
-            
-            if (node.neo4j_id) {
-                nodeByNeo4jId.set(node.neo4j_id, node);
-                nodeByNeo4jId.set(String(node.neo4j_id), node);
-            }
         });
-        
-        console.log(`Node maps created - nodeMap size: ${nodeMap.size}, nodeByNeo4jId size: ${nodeByNeo4jId.size}`);
         
         // Transform relationships to links and update connections
         const links = [];
-        const skippedLinks = [];
         
-        console.log(`Processing ${relationships.length} relationships...`);
-        
-        relationships.forEach((rel, index) => {
-            // Handle both regular numbers and Neo4j Integer objects
-            const sourceId = typeof rel.source === 'object' ? rel.source.toNumber() : rel.source;
-            const targetId = typeof rel.target === 'object' ? rel.target.toNumber() : rel.target;
-            
-            if (index < 5) {
-                console.log(`Relationship ${index}: source=${sourceId} (type: ${typeof sourceId}), target=${targetId} (type: ${typeof targetId})`);
-            }
-            
-            // Try to find nodes by original_id first, then by neo4j_id
-            // Also try string/number conversions since original_id might be stored as string
-            let sourceNode = nodeMap.get(sourceId) || 
-                           nodeMap.get(String(sourceId)) || 
-                           nodeMap.get(Number(sourceId)) ||
-                           nodeByNeo4jId.get(sourceId) ||
-                           nodeByNeo4jId.get(String(sourceId)) ||
-                           nodeByNeo4jId.get(Number(sourceId));
-                           
-            let targetNode = nodeMap.get(targetId) || 
-                           nodeMap.get(String(targetId)) || 
-                           nodeMap.get(Number(targetId)) ||
-                           nodeByNeo4jId.get(targetId) ||
-                           nodeByNeo4jId.get(String(targetId)) ||
-                           nodeByNeo4jId.get(Number(targetId));
+        relationships.forEach(rel => {
+            const sourceNode = nodeMap.get(rel.source);
+            const targetNode = nodeMap.get(rel.target);
             
             if (sourceNode && targetNode) {
-                // Update connections sets using the node's primary ID
+                // Update connections sets
                 sourceNode.connections.add(targetNode.id);
                 targetNode.connections.add(sourceNode.id);
                 
@@ -185,22 +138,13 @@ export async function fetchBeliefGraph(tagFilter = null) {
                     source: sourceNode.id,
                     target: targetNode.id
                 });
-            } else {
-                // Log skipped relationships for debugging
-                if (index < 5) {
-                    console.log(`Could not find nodes: sourceNode=${!!sourceNode}, targetNode=${!!targetNode}`);
-                }
-                skippedLinks.push({ source: sourceId, target: targetId });
             }
         });
-        
-        if (skippedLinks.length > 0) {
-            console.warn(`Skipped ${skippedLinks.length} relationships due to missing nodes:`, skippedLinks);
-        }
         
         const filterInfo = tagFilter ? ` (filtered by tag: ${tagFilter})` : ' (no filter)';
         console.log(`Database loaded successfully from: ${config.uri}`);
         console.log(`Loaded ${nodes.length} nodes and ${links.length} relationships${filterInfo}`);
+        console.log(`ID mapping created with ${Object.keys(window.neo4jIdMapping.originalToId).length} entries`);
         
         return { nodes, links };
         
