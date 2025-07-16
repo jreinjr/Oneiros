@@ -35,7 +35,7 @@ export class ControlsManager {
         const sliders = [
             'nodeCount', 'connectionDensity',
             'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps',
-            'messageDuration', 'typingSpeed', 'logPanelScale',
+            'messageDuration', 'typingSpeed', 'logPanelScale', 'overlayOpacity',
             'dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitSpeed',
             'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed',
             'popupOffsetX', 'popupOffsetY', 'cameraTargetX', 'cameraTargetY'
@@ -62,6 +62,11 @@ export class ControlsManager {
                 this.updateLogPanelScale(currentValue);
             }
             
+            // Initialize overlay opacity if this is the overlayOpacity slider
+            if (id === 'overlayOpacity') {
+                this.updateOverlayOpacity(currentValue);
+            }
+            
             // Add event listener
             slider.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value);
@@ -71,6 +76,11 @@ export class ControlsManager {
                 // Handle log panel scaling
                 if (id === 'logPanelScale') {
                     this.updateLogPanelScale(value);
+                }
+                
+                // Handle overlay opacity
+                if (id === 'overlayOpacity') {
+                    this.updateOverlayOpacity(value);
                 }
                 
                 // Trigger specific callbacks
@@ -677,6 +687,21 @@ export class ControlsManager {
         // The CSS already has translate(-50%, -50%) for centering, so we need to preserve it
         logPanel.style.transformOrigin = 'center center';
         logPanel.style.transform = `translate(-50%, -50%) scale(${scaleFactor})`;
+    }
+
+    /**
+     * Update overlay opacity
+     * @param {number} opacity - Opacity percentage (0-100)
+     */
+    updateOverlayOpacity(opacity) {
+        const overlay = document.getElementById('poetry-overlay');
+        if (!overlay) return;
+        
+        // Convert percentage to opacity value (0-1)
+        const opacityValue = opacity / 100;
+        
+        // Update the CSS variable or directly set the background
+        overlay.style.background = `rgba(0, 0, 0, ${opacityValue})`;
     }
 
     /**

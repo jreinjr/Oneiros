@@ -314,6 +314,16 @@ export class LoggerManager {
         if (this.logPanel) {
             this.logPanel.style.display = visible ? 'block' : 'none';
         }
+        
+        // Also manage overlay visibility
+        const overlay = document.getElementById('poetry-overlay');
+        if (overlay) {
+            if (visible) {
+                overlay.classList.add('visible');
+            } else {
+                overlay.classList.remove('visible');
+            }
+        }
     }
 
     /**

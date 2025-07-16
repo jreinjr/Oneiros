@@ -276,6 +276,16 @@
                         Speed of the typewriter animation effect
                     </div>
                 </div>
+                <div class="control-item">
+                    <label>Overlay Opacity (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="overlayOpacity" min="0" max="100" step="5" value="50">
+                        <span class="value-display" id="overlayOpacityValue">50</span>
+                    </div>
+                    <div class="control-description">
+                        Background darkness when poetry log is active
+                    </div>
+                </div>
             </div>
 
             <div class="control-group">
@@ -377,6 +387,8 @@
 
         </div>
 
+        <div id="poetry-overlay"></div>
+        
         <div id="poetry-log">
             <div id="log-entries"></div>
             <div class="log-title">Poetry Log</div>

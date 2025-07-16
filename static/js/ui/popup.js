@@ -7,8 +7,9 @@
  * Popup manager class
  */
 export class PopupManager {
-    constructor(visualizer) {
+    constructor(visualizer, config) {
         this.visualizer = visualizer;
+        this.config = config;
         
         // DOM elements
         this.popup = document.getElementById('node-popup');
@@ -22,6 +23,8 @@ export class PopupManager {
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
         this.lineUpdateInterval = null;
+        this.showTimeout = null;
+        this.hideTimeout = null;
         
         this.initialize();
     }
@@ -119,8 +122,48 @@ export class PopupManager {
             this.positionNearNode(node);
         }
         
-        // Show popup
-        this.popup.classList.add('visible');
+        // Clear any existing timeouts
+        if (this.showTimeout) {
+            clearTimeout(this.showTimeout);
+            this.showTimeout = null;
+        }
+        if (this.hideTimeout) {
+            clearTimeout(this.hideTimeout);
+            this.hideTimeout = null;
+        }
+        
+        // Get timing from config
+        const dreamTransitionDuration = this.config ? this.config.get('dreamTransitionDuration') : 3;
+        const dreamOrbitDuration = this.config ? this.config.get('dreamOrbitDuration') : 10;
+        const cameraMode = this.config ? this.config.get('cameraMode') : 'manual';
+        
+        const showDelay = (dreamTransitionDuration * 1000) / 2; // Convert to milliseconds and divide by 2
+        
+        // Show popup after delay
+        this.showTimeout = setTimeout(() => {
+            this.popup.classList.add('visible');
+            if (this.connectionLine) {
+                this.connectionLine.classList.add('visible');
+            }
+            this.showTimeout = null;
+            
+            // In dream mode, schedule fade-out before next transition
+            if (cameraMode === 'dreaming') {
+                // Calculate when to start fading out (subtract fade duration from orbit duration)
+                const fadeOutDuration = 300; // Match CSS transition duration (0.3s)
+                const hideDelay = (dreamOrbitDuration * 1000) - fadeOutDuration - showDelay;
+                
+                if (hideDelay > 0) {
+                    this.hideTimeout = setTimeout(() => {
+                        this.popup.classList.remove('visible');
+                        if (this.connectionLine) {
+                            this.connectionLine.classList.remove('visible');
+                        }
+                        this.hideTimeout = null;
+                    }, hideDelay);
+                }
+            }
+        }, showDelay);
         
         // Start updating the connection line
         this.startLineUpdates();
@@ -132,12 +175,27 @@ export class PopupManager {
     hide() {
         if (!this.popup) return;
         
+        // Clear any pending timeouts
+        if (this.showTimeout) {
+            clearTimeout(this.showTimeout);
+            this.showTimeout = null;
+        }
+        if (this.hideTimeout) {
+            clearTimeout(this.hideTimeout);
+            this.hideTimeout = null;
+        }
+        
         this.popup.classList.remove('visible');
+        if (this.connectionLine) {
+            this.connectionLine.classList.remove('visible');
+        }
         this.currentNode = null;
         
-        // Clear connection line
+        // Clear connection line path after fade
         if (this.connectionLine) {
-            this.connectionLine.setAttribute('d', '');
+            setTimeout(() => {
+                this.connectionLine.setAttribute('d', '');
+            }, 300); // Match CSS transition duration
         }
         
         this.stopLineUpdates();

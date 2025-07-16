@@ -537,6 +537,25 @@ input[type="checkbox"] {
 }
 
 
+#poetry-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+    z-index: 999;
+    pointer-events: none;
+}
+
+#poetry-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
 #poetry-log {
     position: fixed;
     top: 50%;
@@ -630,7 +649,10 @@ input[type="checkbox"] {
     cursor: move;
     user-select: none;
     z-index: 1001;
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-out, visibility 0.3s ease-out, transform 0.3s ease-out;
+    transform: scale(0.95);
     box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
     max-height: 300px;
     overflow-y: auto;
@@ -647,7 +669,9 @@ input[type="checkbox"] {
 }
 
 #node-popup.visible {
-    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
 }
 
 #node-popup-title {
@@ -686,9 +710,14 @@ input[type="checkbox"] {
     stroke: #4CAF50;
     stroke-width: 2;
     fill: none;
-    opacity: 0.8;
+    opacity: 0;
     stroke-dasharray: 5, 5;
     animation: dash 20s linear infinite;
+    transition: opacity 0.3s ease-out;
+}
+
+.connection-path.visible {
+    opacity: 0.8;
 }
 
 .theme-truth .connection-path {

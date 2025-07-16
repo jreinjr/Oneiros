@@ -40,6 +40,7 @@ export const DEFAULT_CONFIG = {
     messageDuration: 5,  // seconds
     typingSpeed: 33,  // characters per second
     logPanelScale: 100,  // percentage (75-300)
+    overlayOpacity: 50,  // percentage (0-100)
     
     // Feature Toggles
     poetryLogEnabled: true,

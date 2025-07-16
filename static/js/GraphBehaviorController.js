@@ -42,7 +42,7 @@ export class GraphBehaviorController {
             
             // Initialize UI components
             this.controls = new ControlsManager(this.config);
-            this.popup = new PopupManager(this.visualizer);
+            this.popup = new PopupManager(this.visualizer, this.config);
             this.logger = new LoggerManager(this.config);
             
             // Set up event handlers
