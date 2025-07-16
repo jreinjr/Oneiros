@@ -1,0 +1,18 @@
+{
+  "theme": "truth",
+  "colors": {
+    "defaultLink": "#666",
+    "defaultNode": "#2196F3",
+    "graphBackground": "#000000",
+    "highlightedLink": "rgba(255, 255, 255, 0.8)",
+    "highlightedNode": "rgba(255, 255, 255, 0.8)",
+    "logBackground": "rgba(0, 0, 0, 0.8)",
+    "logPrimary": "#2196F3",
+    "logSecondary": "#ffffff",
+    "popupBackground": "rgba(0, 0, 0, 0.9)",
+    "popupPrimary": "#2196F3",
+    "popupSecondary": "#cfcfcf",
+    "selectedNode": "#ffffff",
+    "ui": "#2196F3"
+  }
+}

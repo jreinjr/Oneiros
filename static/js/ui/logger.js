@@ -569,6 +569,15 @@ export class LoggerManager {
      * Update colors for all log entries
      */
     updateLogColors() {
+        // Update log panel background
+        if (this.logPanel) {
+            const colors = this.config.get('colors');
+            if (colors && colors.logBackground) {
+                this.logPanel.style.setProperty('background', colors.logBackground, 'important');
+            }
+        }
+        
+        // Update all log entries
         const logEntries = document.querySelectorAll('.log-entry');
         logEntries.forEach(entry => {
             this.applyLogEntryColors(entry);

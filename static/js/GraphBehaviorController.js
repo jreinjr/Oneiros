@@ -51,6 +51,9 @@ export class GraphBehaviorController {
             // Set up UI handlers
             this.setupUIHandlers();
             
+            // Sync initial theme with server
+            await this.syncInitialTheme();
+            
             // Generate initial graph
             this.generateGraph();
             
@@ -111,15 +114,63 @@ export class GraphBehaviorController {
     }
     
     /**
+     * Sync initial theme with server
+     */
+    async syncInitialTheme() {
+        const currentTheme = this.config.get('currentTheme');
+        try {
+            // First, load saved colors from file
+            await this.config.applySavedColors(currentTheme);
+            
+            // Update color controls to match loaded colors
+            this.controls.updateColorControlsFromConfig();
+            
+            // Then, try to set the server theme to match frontend
+            const response = await fetch('/api/set-theme', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ theme: currentTheme })
+            });
+            
+            if (!response.ok) {
+                console.error('Failed to sync initial theme with server');
+            } else {
+                console.log(`Initial theme synced with server: ${currentTheme}`);
+            }
+        } catch (error) {
+            console.error('Error syncing initial theme with server:', error);
+        }
+    }
+    
+    /**
      * Set the current theme
      * @param {string} theme - Theme name ('truth', 'beauty', 'love')
      */
-    setTheme(theme) {
+    async setTheme(theme) {
         // Update config
         this.config.set('currentTheme', theme);
         
+        // Sync theme with server
+        try {
+            const response = await fetch('/api/set-theme', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ theme: theme })
+            });
+            
+            if (!response.ok) {
+                console.error('Failed to sync theme with server');
+            }
+        } catch (error) {
+            console.error('Error syncing theme with server:', error);
+        }
+        
         // Apply saved colors or default colors
-        this.config.applySavedColors(theme);
+        await this.config.applySavedColors(theme);
         
         // Update body class for CSS styling
         document.body.className = `theme-${theme}`;
@@ -130,6 +181,8 @@ export class GraphBehaviorController {
         // Refresh visuals
         this.visualizer.refreshVisuals();
         this.updateBackgroundColor();
+        this.updatePopupColors();
+        this.updateLogColors();
     }
 
     /**
@@ -227,13 +280,6 @@ export class GraphBehaviorController {
             this.handleColorChange(data.colorKey, data.colorValue);
         });
 
-        this.controls.setCallback('savePalette', () => {
-            this.savePalette();
-        });
-
-        this.controls.setCallback('resetPalette', () => {
-            this.resetPalette();
-        });
     }
 
     /**
@@ -405,33 +451,6 @@ export class GraphBehaviorController {
     /**
      * Save current palette to localStorage
      */
-    savePalette() {
-        const currentTheme = this.config.get('currentTheme');
-        this.config.saveThemeColors(currentTheme);
-        console.log(`Saved palette for theme: ${currentTheme}`);
-        
-        // Visual feedback
-        this.logger.addCustomEntry(`Saved ${currentTheme} palette`, 'info');
-    }
-
-    /**
-     * Reset palette to default colors
-     */
-    resetPalette() {
-        const currentTheme = this.config.get('currentTheme');
-        const defaultColors = THEME_COLORS[currentTheme];
-        if (defaultColors) {
-            this.config.set('colors', defaultColors);
-            this.controls.updateColorControlsFromConfig();
-            this.visualizer.refreshVisuals();
-            this.updateBackgroundColor();
-            this.updatePopupColors();
-            this.updateLogColors();
-            
-            console.log(`Reset palette for theme: ${currentTheme}`);
-            this.logger.addCustomEntry(`Reset ${currentTheme} palette to default`, 'info');
-        }
-    }
 
     /**
      * Update graph background color
@@ -721,6 +740,24 @@ export class GraphBehaviorController {
                 default:
                     // Any other type, display content as is
                     break;
+            }
+            
+            // Check for metadata containing node IDs for runtime edges
+            if (message.metadata && message.metadata.nodes && message.metadata.nodes.length >= 2) {
+                const nodeIds = message.metadata.nodes;
+                if (this.visualizer) {
+                    // Convert string IDs to numbers to match Neo4j node IDs
+                    const id1 = parseInt(nodeIds[0], 10);
+                    const id2 = parseInt(nodeIds[1], 10);
+                    
+                    if (!isNaN(id1) && !isNaN(id2)) {
+                        // Create runtime edge between the two quotes
+                        this.visualizer.addRuntimeEdge(id1, id2);
+                        console.log(`Added runtime edge between nodes ${id1} and ${id2}`);
+                    } else {
+                        console.warn(`Invalid node IDs for runtime edge: ${nodeIds[0]}, ${nodeIds[1]}`);
+                    }
+                }
             }
             
             // Use the logger's quote entry method if we have an author

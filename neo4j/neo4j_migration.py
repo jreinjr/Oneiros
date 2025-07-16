@@ -81,14 +81,16 @@ class Neo4jMigration:
                             text: $text,
                             author_name: $author_name,
                             tags: $tags,
-                            source_link: $source_link
+                            source_link: $source_link,
+                            original_id: $original_id
                         })
                         RETURN q
                     """, 
                     text=quote.quote_text,
                     author_name=author.name,
                     tags=tag_names,
-                    source_link=quote.source_link or ""
+                    source_link=quote.source_link or "",
+                    original_id=quote.original_id if hasattr(quote, 'original_id') else quote.id
                     )
                     
                     # Create WRITTEN_BY relationship to Author

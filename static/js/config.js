@@ -61,7 +61,12 @@ export const DEFAULT_CONFIG = {
     
     // Camera Target Screen Position (percentage of screen)
     cameraTargetX: 50,       // 0-100% of screen width
-    cameraTargetY: 50        // 0-100% of screen height
+    cameraTargetY: 50,       // 0-100% of screen height
+    
+    // Edge Weight Settings
+    defaultEdgeWeight: 1,           // Weight for Neo4j edges
+    runtimeEdgeWeight: 0.25,        // Weight for new runtime edges
+    incrementalEdgeWeight: 0.25     // Weight increment for existing runtime edges
 };
 
 // Theme color configurations with expanded palette
@@ -150,7 +155,10 @@ export const CONFIG_LIMITS = {
     popupOffsetX: { min: -200, max: 200, step: 10 },
     popupOffsetY: { min: -200, max: 200, step: 10 },
     cameraTargetX: { min: 0, max: 100, step: 5 },
-    cameraTargetY: { min: 0, max: 100, step: 5 }
+    cameraTargetY: { min: 0, max: 100, step: 5 },
+    defaultEdgeWeight: { min: 0.5, max: 10, step: 0.5 },
+    runtimeEdgeWeight: { min: 0.1, max: 5, step: 0.1 },
+    incrementalEdgeWeight: { min: 0.1, max: 5, step: 0.1 }
 };
 
 // Color component definitions for UI
@@ -253,21 +261,61 @@ export class ConfigManager {
      * Save current theme colors to localStorage
      * @param {string} theme - Theme name to save
      */
-    saveThemeColors(theme) {
+    async saveThemeColors(theme) {
         const currentColors = this.get('colors');
-        const savedPalettes = this.getSavedPalettes();
-        savedPalettes[theme] = { ...currentColors };
-        localStorage.setItem('oneiros_saved_palettes', JSON.stringify(savedPalettes));
+        try {
+            const response = await fetch(`/api/palette/${theme}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ colors: currentColors })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to save palette: ${response.statusText}`);
+            }
+            
+            console.log(`Saved palette for theme: ${theme}`);
+            
+            // Also save to localStorage as fallback
+            const savedPalettes = this.getSavedPalettes();
+            savedPalettes[theme] = { ...currentColors };
+            localStorage.setItem('oneiros_saved_palettes', JSON.stringify(savedPalettes));
+        } catch (error) {
+            console.error('Error saving palette:', error);
+            // Fall back to localStorage only
+            const savedPalettes = this.getSavedPalettes();
+            savedPalettes[theme] = { ...currentColors };
+            localStorage.setItem('oneiros_saved_palettes', JSON.stringify(savedPalettes));
+        }
     }
 
     /**
-     * Load saved theme colors from localStorage
+     * Load saved theme colors from file API or localStorage
      * @param {string} theme - Theme name to load
-     * @returns {Object|null} Saved colors or null if not found
+     * @returns {Promise<Object|null>} Saved colors or null if not found
      */
-    loadThemeColors(theme) {
-        const savedPalettes = this.getSavedPalettes();
-        return savedPalettes[theme] || null;
+    async loadThemeColors(theme) {
+        try {
+            const response = await fetch(`/api/palette/${theme}`);
+            
+            if (response.ok) {
+                const palette = await response.json();
+                return palette.colors || null;
+            } else if (response.status === 404) {
+                // Palette file doesn't exist, try localStorage
+                const savedPalettes = this.getSavedPalettes();
+                return savedPalettes[theme] || null;
+            } else {
+                throw new Error(`Failed to load palette: ${response.statusText}`);
+            }
+        } catch (error) {
+            console.error('Error loading palette from file:', error);
+            // Fall back to localStorage
+            const savedPalettes = this.getSavedPalettes();
+            return savedPalettes[theme] || null;
+        }
     }
 
     /**
@@ -288,8 +336,8 @@ export class ConfigManager {
      * Apply saved colors to current theme if they exist
      * @param {string} theme - Theme name to apply
      */
-    applySavedColors(theme) {
-        const savedColors = this.loadThemeColors(theme);
+    async applySavedColors(theme) {
+        const savedColors = await this.loadThemeColors(theme);
         if (savedColors) {
             this.set('colors', savedColors);
             console.log(`Applied saved colors for theme: ${theme}`);

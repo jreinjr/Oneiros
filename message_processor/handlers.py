@@ -23,7 +23,7 @@ class BaseHandler(ABC):
     """Base class for all message handlers"""
     
     @abstractmethod
-    async def process(self, message: str) -> Dict[str, Any]:
+    async def process(self, message: str, theme: Optional[str] = None) -> Dict[str, Any]:
         """Process the message and return result"""
         pass
 
@@ -31,7 +31,7 @@ class BaseHandler(ABC):
 class EchoHandler(BaseHandler):
     """Handler that returns the input message unchanged"""
     
-    async def process(self, message: str) -> Dict[str, Any]:
+    async def process(self, message: str, theme: Optional[str] = None) -> Dict[str, Any]:
         """Return the message unchanged"""
         return {
             "type": "echo",
@@ -50,7 +50,7 @@ class LLMHandler(BaseHandler):
             'You are a haiku generation tool. Write a haiku inspired by the following message: "{message}" ONLY return the haiku and NOTHING else, no conversational pleasantries.')
         self.timeout = ollama_config.get('timeout', 30)
         
-    async def process(self, message: str) -> Dict[str, Any]:
+    async def process(self, message: str, theme: Optional[str] = None) -> Dict[str, Any]:
         """Process message through LLM"""
         try:
             prompt = self.prompt_template.format(message=message)
@@ -120,7 +120,7 @@ class QuoteHandler(BaseHandler):
                 logger.error(f"Failed to load sentence transformer: {e}")
                 self.model = None
     
-    async def process(self, message: str) -> Dict[str, Any]:
+    async def process(self, message: str, theme: Optional[str] = None) -> Dict[str, Any]:
         """Find similar quote using vector search"""
         if not self.model:
             return {
@@ -150,15 +150,29 @@ class QuoteHandler(BaseHandler):
                         "error": "No quotes with embeddings found"
                     }
                 
-                # Query vector index for most similar quote
-                results = session.run("""
-                    CALL db.index.vector.queryNodes('quote_embeddings', 1, $embedding)
-                    YIELD node, score
-                    MATCH (node)-[:WRITTEN_BY]->(a:Author)
-                    RETURN node.text as quote, a.name as author, node.tags as tags, score
-                    ORDER BY score DESC
-                    LIMIT 1
-                """, embedding=query_embedding).data()
+                # Query vector index for most similar quotes
+                # If theme is provided, filter by it
+                if theme:
+                    results = session.run("""
+                        CALL db.index.vector.queryNodes('quote_embeddings', 10, $embedding)
+                        YIELD node, score
+                        WHERE $theme IN node.tags
+                        MATCH (node)-[:WRITTEN_BY]->(a:Author)
+                        RETURN node.text as quote, a.name as author, node.tags as tags, score, 
+                               COALESCE(node.original_id, id(node)) as node_id
+                        ORDER BY score DESC
+                        LIMIT 2
+                    """, embedding=query_embedding, theme=theme).data()
+                else:
+                    results = session.run("""
+                        CALL db.index.vector.queryNodes('quote_embeddings', 2, $embedding)
+                        YIELD node, score
+                        MATCH (node)-[:WRITTEN_BY]->(a:Author)
+                        RETURN node.text as quote, a.name as author, node.tags as tags, score, 
+                               COALESCE(node.original_id, id(node)) as node_id
+                        ORDER BY score DESC
+                        LIMIT 2
+                    """, embedding=query_embedding).data()
                 
                 if not results:
                     return {
@@ -168,7 +182,10 @@ class QuoteHandler(BaseHandler):
                         "error": "No similar quotes found"
                     }
                 
+                # Return top quote with metadata containing both node IDs
                 result = results[0]
+                node_ids = [str(r['node_id']) for r in results]
+                
                 return {
                     "type": "quote",
                     "content": result['quote'],
@@ -176,7 +193,11 @@ class QuoteHandler(BaseHandler):
                     "author": result['author'],
                     "tags": result['tags'],
                     "similarity_score": result['score'],
-                    "query": message
+                    "query": message,
+                    "metadata": {
+                        "nodes": node_ids,
+                        "theme": theme
+                    }
                 }
                 
         except Exception as e:
@@ -205,26 +226,46 @@ class RAGHandler(BaseHandler):
         self.rag_prompt_template = ollama_config.get('rag_prompt_template',
             'You are a haiku generation tool. Write a haiku inspired by the following message: "{message}" ONLY return the haiku and NOTHING else, no conversational pleasantries.')
     
-    async def process(self, message: str) -> Dict[str, Any]:
+    async def process(self, message: str, theme: Optional[str] = None) -> Dict[str, Any]:
         """Process message using RAG: vector search + LLM"""
         try:
-            # First, get the most similar quote
-            quote_result = await self.quote_handler.process(message)
+            # First, get the most similar quotes
+            quote_result = await self.quote_handler.process(message, theme)
             
             if quote_result['type'] == 'quote_error':
                 # If quote search fails, fall back to regular LLM
-                return await self.llm_handler.process(message)
+                return await self.llm_handler.process(message, theme)
             
-            # Use quote as context for LLM
+            # Get both quotes from Neo4j for context
+            node_ids = quote_result.get('metadata', {}).get('nodes', [])
+            if len(node_ids) >= 2:
+                # Fetch both quotes for LLM context
+                with self.quote_handler.driver.session() as session:
+                    # Handle both original_id and neo4j id
+                    quotes_data = session.run("""
+                        MATCH (q:Quote)
+                        WHERE q.original_id IN $node_ids OR id(q) IN $node_ids
+                        RETURN q.text as text
+                    """, node_ids=[int(nid) for nid in node_ids]).data()
+                    
+                    if len(quotes_data) >= 2:
+                        # Concatenate both quotes as context
+                        context_text = f"{quotes_data[0]['text']}\n\n{quotes_data[1]['text']}"
+                    else:
+                        context_text = quote_result['content']
+            else:
+                context_text = quote_result['content']
+            
+            # Use quotes as context for LLM
             rag_prompt = self.rag_prompt_template.format(
-                message=quote_result['content']
+                message=context_text
             )
             
             # Temporarily override the LLM prompt template
             original_prompt = self.llm_handler.prompt_template
             self.llm_handler.prompt_template = "{message}"  # Use message as-is since we formatted it
             
-            llm_result = await self.llm_handler.process(rag_prompt)
+            llm_result = await self.llm_handler.process(rag_prompt, theme)
             
             # Restore original prompt template
             self.llm_handler.prompt_template = original_prompt
@@ -233,7 +274,7 @@ class RAGHandler(BaseHandler):
                 # If LLM fails, return the quote
                 return quote_result
             
-            # Combine results
+            # Combine results with metadata
             return {
                 "type": "rag",
                 "content": llm_result['content'],
@@ -243,7 +284,8 @@ class RAGHandler(BaseHandler):
                 "context_tags": quote_result['tags'],
                 "similarity_score": quote_result['similarity_score'],
                 "query": message,
-                "llm_model": llm_result.get('model', 'unknown')
+                "llm_model": llm_result.get('model', 'unknown'),
+                "metadata": quote_result.get('metadata', {})
             }
             
         except Exception as e:

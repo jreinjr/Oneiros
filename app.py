@@ -3,6 +3,7 @@
 from flask import Flask, render_template, abort, request, jsonify
 from research.database import get_session, get_all_authors, get_author_by_name, init_database
 import os
+import json
 from datetime import datetime
 import markdown2
 from collections import deque
@@ -27,6 +28,10 @@ message_lock = threading.Lock()
 # Global variable to store pending screen text results
 screen_text_queue = deque(maxlen=100)
 screen_text_lock = threading.Lock()
+
+# Current theme state (server-side)
+current_theme = 'beauty'  # Default theme
+theme_lock = threading.Lock()
 
 # Initialize message processor
 message_processor_config = {
@@ -151,9 +156,13 @@ def listen():
         user_mode = data.get('user_mode')
         screen_mode = data.get('screen_mode')
         
+        # Get current theme from server state
+        with theme_lock:
+            theme = current_theme
+        
         # Process user response immediately
         def process_user():
-            return run_async(message_processor.process_user_immediate(message, user_mode))
+            return run_async(message_processor.process_user_immediate(message, user_mode, theme))
         
         # Get user response
         user_result = executor.submit(process_user).result(timeout=30)
@@ -167,7 +176,8 @@ def listen():
                     message, 
                     screen_mode, 
                     user_result['user_response'],
-                    user_mode
+                    user_mode,
+                    theme
                 )
             )
             logger.info(f"Screen text processing scheduled with task ID: {task_id}")
@@ -362,6 +372,42 @@ def test_handlers():
         logger.error(f"Error testing handlers: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/set-theme', methods=['POST'])
+def set_theme():
+    """Set the current theme on the server"""
+    global current_theme
+    try:
+        data = request.get_json()
+        if not data or 'theme' not in data:
+            return jsonify({'error': 'No theme provided'}), 400
+        
+        theme = data['theme']
+        if theme not in ['truth', 'beauty', 'love']:
+            return jsonify({'error': 'Invalid theme'}), 400
+        
+        with theme_lock:
+            current_theme = theme
+        
+        logger.info(f"Theme set to: {theme}")
+        return jsonify({
+            'status': 'success',
+            'theme': theme
+        })
+    except Exception as e:
+        logger.error(f"Error setting theme: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/get-theme', methods=['GET'])
+def get_theme():
+    """Get the current theme from the server"""
+    with theme_lock:
+        theme = current_theme
+    
+    return jsonify({
+        'status': 'success',
+        'theme': theme
+    })
+
 @app.template_filter('format_years')
 def format_years(birth_year, death_year=None):
     """Format birth and death years"""
@@ -440,6 +486,58 @@ def render_markdown(text):
         html = '\n'.join(f'<p>{p.strip()}</p>' for p in paragraphs if p.strip())
     
     return html
+
+@app.route('/api/palette/<theme>', methods=['GET'])
+def get_palette(theme):
+    """Get palette for a specific theme"""
+    try:
+        # Validate theme
+        if theme not in ['truth', 'love', 'beauty']:
+            return jsonify({'error': 'Invalid theme'}), 400
+        
+        # Read palette file
+        palette_path = os.path.join('data', 'palettes', f'{theme}.json')
+        if os.path.exists(palette_path):
+            with open(palette_path, 'r') as f:
+                palette = json.load(f)
+            return jsonify(palette), 200
+        else:
+            # Return 404 if palette file doesn't exist
+            return jsonify({'error': 'Palette not found'}), 404
+    except Exception as e:
+        logger.error(f"Error reading palette: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/palette/<theme>', methods=['POST'])
+def save_palette(theme):
+    """Save palette for a specific theme"""
+    try:
+        # Validate theme
+        if theme not in ['truth', 'love', 'beauty']:
+            return jsonify({'error': 'Invalid theme'}), 400
+        
+        # Get palette data from request
+        data = request.get_json()
+        if not data or 'colors' not in data:
+            return jsonify({'error': 'Invalid palette data'}), 400
+        
+        # Prepare palette object
+        palette = {
+            'theme': theme,
+            'colors': data['colors']
+        }
+        
+        # Write palette file
+        palette_path = os.path.join('data', 'palettes', f'{theme}.json')
+        os.makedirs(os.path.dirname(palette_path), exist_ok=True)
+        
+        with open(palette_path, 'w') as f:
+            json.dump(palette, f, indent=2)
+        
+        return jsonify({'status': 'success', 'message': f'Palette saved for theme: {theme}'}), 200
+    except Exception as e:
+        logger.error(f"Error saving palette: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(404)
 def page_not_found(e):

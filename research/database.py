@@ -49,6 +49,7 @@ class Quote(Base):
     __tablename__ = 'quotes'
     
     id = Column(Integer, primary_key=True)
+    original_id = Column(Integer, nullable=True)  # Original ID from CSV
     author_id = Column(Integer, ForeignKey('authors.id'), nullable=False)
     quote_text = Column(Text, nullable=False)
     source_link = Column(String(500))

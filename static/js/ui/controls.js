@@ -4,6 +4,24 @@
  */
 
 /**
+ * Debounce utility function
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Wait time in milliseconds
+ * @returns {Function} Debounced function
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
  * Controls manager class
  */
 export class ControlsManager {
@@ -11,6 +29,14 @@ export class ControlsManager {
         this.config = config;
         this.elements = new Map();
         this.callbacks = new Map();
+        
+        // Create debounced save function
+        this.debouncedSavePalette = debounce(() => {
+            const currentTheme = this.config.get('currentTheme');
+            if (currentTheme) {
+                this.config.saveThemeColors(currentTheme);
+            }
+        }, 500); // 500ms debounce
         
         this.initialize();
     }
@@ -38,7 +64,8 @@ export class ControlsManager {
             'messageDuration', 'typingSpeed', 'logPanelScale', 'overlayOpacity',
             'dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitSpeed',
             'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed',
-            'popupOffsetX', 'popupOffsetY', 'cameraTargetX', 'cameraTargetY'
+            'popupOffsetX', 'popupOffsetY', 'cameraTargetX', 'cameraTargetY',
+            'defaultEdgeWeight', 'runtimeEdgeWeight', 'incrementalEdgeWeight'
         ];
 
         sliders.forEach(id => {
@@ -112,23 +139,6 @@ export class ControlsManager {
         }
 
 
-        // Save Palette button
-        const savePaletteBtn = document.getElementById('savePalette');
-        if (savePaletteBtn) {
-            this.elements.set('savePalette', savePaletteBtn);
-            savePaletteBtn.addEventListener('click', () => {
-                this.triggerCallback('savePalette');
-            });
-        }
-
-        // Reset Palette button
-        const resetPaletteBtn = document.getElementById('resetPalette');
-        if (resetPaletteBtn) {
-            this.elements.set('resetPalette', resetPaletteBtn);
-            resetPaletteBtn.addEventListener('click', () => {
-                this.triggerCallback('resetPalette');
-            });
-        }
     }
 
     /**
@@ -285,6 +295,9 @@ export class ControlsManager {
         
         this.config.set('colors', newColors);
         this.triggerCallback('colorChanged', { colorKey, colorValue });
+        
+        // Auto-save palette with debouncing
+        this.debouncedSavePalette();
     }
 
     /**

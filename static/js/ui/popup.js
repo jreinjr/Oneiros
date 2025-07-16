@@ -479,9 +479,8 @@ export class PopupManager {
      * Update popup colors (called when colors change in config)
      */
     updateColors() {
-        if (this.isVisible()) {
-            this.applyPopupColors();
-        }
+        // Always apply colors, not just when visible
+        this.applyPopupColors();
     }
     
     /**

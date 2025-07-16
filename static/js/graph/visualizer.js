@@ -20,6 +20,9 @@ export class GraphVisualizer {
         this.highlightedNodes = new Set();
         this.highlightedLinks = new Set();
         
+        // Runtime edges management
+        this.runtimeEdges = new Map(); // Map of "nodeId1-nodeId2" -> { weight, isRuntime: true }
+        
         // Event callbacks
         this.onNodeClick = null;
         this.onNodeHover = null;
@@ -111,8 +114,117 @@ export class GraphVisualizer {
      * @param {Object} graphData - Graph data with nodes and links
      */
     setGraphData(graphData) {
+        // Clear runtime edges when loading new data
+        this.runtimeEdges.clear();
+        
+        // Store original graph data
+        this.originalGraphData = {
+            nodes: [...graphData.nodes],
+            links: [...graphData.links]
+        };
+        
         this.graphData = graphData;
         this.graph.graphData(graphData);
+        this.updateForces();
+    }
+    
+    /**
+     * Add or update a runtime edge
+     * @param {string|number} sourceId - Source node ID
+     * @param {string|number} targetId - Target node ID
+     * @param {number} weight - Optional weight (defaults to config.runtimeEdgeWeight)
+     */
+    addRuntimeEdge(sourceId, targetId, weight = null) {
+        // Validate that we have graph data
+        if (!this.graphData || !this.graphData.nodes) {
+            console.warn('Cannot add runtime edge: graph data not loaded');
+            return;
+        }
+        
+        // Find the actual nodes to get their exact IDs
+        // Use == for comparison to handle string/number mismatches
+        const sourceNode = this.graphData.nodes.find(node => 
+            node.id == sourceId
+        );
+        const targetNode = this.graphData.nodes.find(node => 
+            node.id == targetId
+        );
+        
+        if (!sourceNode || !targetNode) {
+            console.warn(`Cannot add runtime edge: node(s) not found. Source ${sourceId}: ${!!sourceNode}, Target ${targetId}: ${!!targetNode}`);
+            console.log('Available node IDs:', this.graphData.nodes.map(n => ({ id: n.id, type: typeof n.id })).slice(0, 10));
+            return;
+        }
+        
+        // Use the exact IDs from the nodes
+        const actualSourceId = sourceNode.id;
+        const actualTargetId = targetNode.id;
+        
+        // Create edge key ensuring consistent ordering
+        // Convert to string for comparison to handle both number and string IDs
+        const edgeKey = String(actualSourceId) < String(actualTargetId) ? 
+            `${actualSourceId}-${actualTargetId}` : 
+            `${actualTargetId}-${actualSourceId}`;
+        
+        // Get weight configuration
+        const defaultWeight = weight || this.config.get('runtimeEdgeWeight');
+        const incrementalWeight = this.config.get('incrementalEdgeWeight');
+        
+        // Check if edge already exists
+        if (this.runtimeEdges.has(edgeKey)) {
+            // Increment existing edge weight
+            const existingEdge = this.runtimeEdges.get(edgeKey);
+            existingEdge.weight += incrementalWeight;
+            console.log(`Incremented runtime edge ${edgeKey} weight to ${existingEdge.weight}`);
+        } else {
+            // Create new runtime edge with the exact node IDs
+            this.runtimeEdges.set(edgeKey, {
+                source: actualSourceId,
+                target: actualTargetId,
+                weight: defaultWeight,
+                isRuntime: true
+            });
+            console.log(`Created runtime edge ${edgeKey} with weight ${defaultWeight}`);
+        }
+        
+        // Update graph with merged data
+        this.updateGraphWithRuntimeEdges();
+    }
+    
+    /**
+     * Clear all runtime edges
+     */
+    clearRuntimeEdges() {
+        this.runtimeEdges.clear();
+        this.updateGraphWithRuntimeEdges();
+    }
+    
+    /**
+     * Update graph data to include runtime edges
+     */
+    updateGraphWithRuntimeEdges() {
+        if (!this.originalGraphData) return;
+        
+        // Start with original links
+        const mergedLinks = [...this.originalGraphData.links];
+        
+        // Add runtime edges
+        this.runtimeEdges.forEach((edge, key) => {
+            mergedLinks.push({
+                source: edge.source,
+                target: edge.target,
+                weight: edge.weight,
+                isRuntime: true
+            });
+        });
+        
+        // Update graph data
+        this.graphData = {
+            nodes: [...this.originalGraphData.nodes],
+            links: mergedLinks
+        };
+        
+        this.graph.graphData(this.graphData);
         this.updateForces();
     }
 
@@ -268,7 +380,18 @@ export class GraphVisualizer {
         const colors = this.config.get('colors');
         const linkKey = this.getLinkKey(link);
         
-        return this.highlightedLinks.has(linkKey) ? colors.highlightedLink : colors.defaultLink;
+        // If highlighted, use highlight color
+        if (this.highlightedLinks.has(linkKey)) {
+            return colors.highlightedLink;
+        }
+        
+        // For runtime edges, use a slightly brighter/different color
+        if (link.isRuntime) {
+            // Make runtime edges slightly brighter than default
+            return '#999'; // Lighter gray for runtime edges
+        }
+        
+        return colors.defaultLink;
     }
 
     /**
@@ -280,7 +403,21 @@ export class GraphVisualizer {
         const baseWidth = this.config.get('connectionThickness');
         const linkKey = this.getLinkKey(link);
         
-        return this.highlightedLinks.has(linkKey) ? baseWidth * 3 : baseWidth;
+        // Use edge weight if available
+        let width = baseWidth;
+        if (link.weight) {
+            // For runtime edges, use their weight
+            if (link.isRuntime) {
+                width = baseWidth * link.weight;
+            } else {
+                // For Neo4j edges, use configured default weight
+                const defaultWeight = this.config.get('defaultEdgeWeight');
+                width = baseWidth * defaultWeight;
+            }
+        }
+        
+        // Apply highlight multiplier if highlighted
+        return this.highlightedLinks.has(linkKey) ? width * 3 : width;
     }
 
     /**
@@ -290,7 +427,18 @@ export class GraphVisualizer {
      */
     getLinkOpacity(link) {
         const linkKey = this.getLinkKey(link);
-        return this.highlightedLinks.has(linkKey) ? 0.8 : 0.3;
+        
+        // Highlighted links are more opaque
+        if (this.highlightedLinks.has(linkKey)) {
+            return 0.8;
+        }
+        
+        // Runtime edges have slightly higher opacity than default
+        if (link.isRuntime) {
+            return 0.5;
+        }
+        
+        return 0.3;
     }
 
     /**
@@ -493,8 +641,10 @@ export class GraphVisualizer {
             this.graph = null;
         }
         this.graphData = { nodes: [], links: [] };
+        this.originalGraphData = null;
         this.currentNode = null;
         this.highlightedNodes.clear();
         this.highlightedLinks.clear();
+        this.runtimeEdges.clear();
     }
 }
