@@ -151,7 +151,7 @@ export const CONFIG_LIMITS = {
     dreamOrbitDuration: { min: 5, max: 30, step: 1 },
     dreamOrbitSpeed: { min: 0.01, max: 0.2, step: 0.01 },
     dreamTransitionDuration: { min: 1, max: 10, step: 0.5 },
-    haikuOrbitRadius: { min: 1000, max: 5000, step: 100 },
+    haikuOrbitRadius: { min: 1000, max: 10000, step: 100 },
     haikuOrbitSpeed: { min: 0.005, max: 0.1, step: 0.005 },
     popupOffsetX: { min: -200, max: 200, step: 10 },
     popupOffsetY: { min: -200, max: 200, step: 10 },

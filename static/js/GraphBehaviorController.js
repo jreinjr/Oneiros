@@ -583,8 +583,13 @@ export class GraphBehaviorController {
                 }
             });
             
-            // 4. After 2 seconds, fade up overlay
+            // 4. After 1 second, enable poetry log and fade up overlay
             setTimeout(() => {
+                // Enable Poetry Log just before showing overlay
+                this.config.set('poetryLogEnabled', true);
+                this.controls.updateCheckboxFromConfig('poetryLogEnabled');
+                this.handlePoetryLogToggle(true);
+                
                 if (this.logger) {
                     this.logger.showOverlay();
                 }
@@ -604,7 +609,7 @@ export class GraphBehaviorController {
                     }, messageDuration);
                     
                 }, 1000); // 1 second after overlay
-            }, 2000); // 2 seconds after camera transition
+            }, 1000); // 1 second after camera transition
         });
     }
     
@@ -626,13 +631,13 @@ export class GraphBehaviorController {
         // Start haiku mode with callback
         this.visualizer.startHaikuModeWithCallback(onComplete);
         
-        // Enable Poetry Log, disable Node Popup
-        this.config.set('poetryLogEnabled', true);
+        // Disable Node Popup immediately
         this.config.set('nodePopupEnabled', false);
-        this.controls.updateCheckboxFromConfig('poetryLogEnabled');
         this.controls.updateCheckboxFromConfig('nodePopupEnabled');
-        this.handlePoetryLogToggle(true);
         this.handleNodePopupToggle(false);
+        
+        // Don't enable Poetry Log yet - it will be enabled when the overlay shows
+        // This prevents the log panel from appearing before the overlay
         
         this.currentCameraMode = 'haiku';
     }
