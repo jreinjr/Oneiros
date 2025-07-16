@@ -39,6 +39,9 @@ export async function createDriver() {
  * @returns {Promise<Object>} Graph data with nodes and links
  */
 export async function fetchBeliefGraph(tagFilter = null) {
+    const config = await fetchNeo4jConfig();
+    console.log(`Loading from Neo4j database at: ${config.uri}`);
+    
     const driver = await createDriver();
     const session = driver.session();
     
@@ -109,8 +112,9 @@ export async function fetchBeliefGraph(tagFilter = null) {
             };
         });
         
-        const filterInfo = tagFilter ? ` (filtered by tag: ${tagFilter})` : '';
-        console.log(`Fetched ${nodes.length} quotes with ${links.length} SAME_AUTHOR relationships${filterInfo}`);
+        const filterInfo = tagFilter ? ` (filtered by tag: ${tagFilter})` : ' (no filter)';
+        console.log(`Database loaded successfully from: ${config.uri}`);
+        console.log(`Loaded ${nodes.length} nodes and ${links.length} relationships${filterInfo}`);
         
         return { nodes, links };
         

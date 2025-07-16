@@ -53,6 +53,9 @@ export class CameraAnimator {
         // Only update if not in manual mode
         if (this.mode === 'manual') return;
         
+        // Skip update if we're not properly initialized
+        if (!this.camera || !this.cameraRig) return;
+        
         // Calculate delta time in seconds
         const deltaTime = (currentTime - this.lastTime) / 1000;
         this.lastTime = currentTime;
@@ -126,11 +129,20 @@ export class CameraAnimator {
     
     stopDreamMode() {
         this.isDreaming = false;
+        this.nodeTimer = 0;
+        // Clear current node to prevent further selections
+        this.currentNode = null;
+        this.currentNodeIndex = -1;
         // Don't automatically switch to manual mode here
         // Let the mode be set explicitly by the caller
     }
     
     startHaikuMode() {
+        // Kill any ongoing animations first
+        gsap.killTweensOf(this.cameraRig.position);
+        gsap.killTweensOf(this.camera.position);
+        gsap.killTweensOf(this);
+        
         this.mode = 'haiku';
         this.isDreaming = false;
         this.isHaiku = true;
@@ -184,7 +196,11 @@ export class CameraAnimator {
     }
     
     transitionToCenter() {
-        // Return to center
+        // Get current positions for smooth transition
+        const currentRigPos = this.cameraRig.position.clone();
+        const currentCamZ = this.camera.position.z;
+        
+        // Return to center smoothly from current position
         gsap.to(this.cameraRig.position, {
             x: 0, 
             y: 0, 
@@ -193,14 +209,14 @@ export class CameraAnimator {
             ease: "power2.inOut"
         });
         
-        // Return to haiku orbit radius
+        // Smoothly transition orbit radius
         gsap.to(this.camera.position, {
             z: this.config.get('haikuOrbitRadius'),
             duration: this.config.get('dreamTransitionDuration'),
             ease: "power2.inOut"
         });
         
-        // Return to haiku rotation speed
+        // Smoothly transition rotation speed
         gsap.to(this, {
             currentRotationSpeed: this.config.get('haikuOrbitSpeed'),
             duration: this.config.get('dreamTransitionDuration'),
@@ -209,6 +225,7 @@ export class CameraAnimator {
         
         // Reset node selection
         this.currentNodeIndex = -1;
+        this.currentNode = null;
     }
     
     updateConfig(key, value) {

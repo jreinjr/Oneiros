@@ -28,7 +28,6 @@ export class GraphBehaviorController {
         // State
         this.graphData = { nodes: [], links: [] };
         this.currentNode = null;
-        this.manualControlsEnabled = true; // Track manual controls state
         
         this.initialize();
     }
@@ -534,27 +533,54 @@ export class GraphBehaviorController {
      * @param {string} mode - Camera mode (manual, dreaming, haiku)
      */
     handleCameraModeChange(mode) {
-        // Determine if manual controls should be enabled
-        const shouldEnableManualControls = (mode === 'manual');
-        
-        // Only call enableManualControls if the state is actually changing
-        if (this.manualControlsEnabled !== shouldEnableManualControls) {
-            this.manualControlsEnabled = shouldEnableManualControls;
-            this.visualizer.enableManualControls(this.manualControlsEnabled);
-        }
+        // Track the previous mode to determine if we're entering/leaving manual mode
+        const previousMode = this.currentCameraMode || 'manual';
+        this.currentCameraMode = mode;
         
         switch(mode) {
             case 'manual':
                 this.visualizer.stopDreamingMode();
+                // Only enable manual controls if we weren't already in manual mode
+                if (previousMode !== 'manual') {
+                    this.visualizer.enableManualControls(true);
+                }
                 break;
             case 'dreaming':
+                // Only disable manual controls if we were in manual mode
+                if (previousMode === 'manual') {
+                    this.visualizer.enableManualControls(false);
+                }
+                // Enable Node Popup, disable Poetry Log BEFORE starting dream mode
+                // This ensures the popup is ready when the first node is selected
+                this.config.set('nodePopupEnabled', true);
+                this.config.set('poetryLogEnabled', false);
+                this.controls.updateCheckboxFromConfig('nodePopupEnabled');
+                this.controls.updateCheckboxFromConfig('poetryLogEnabled');
+                this.handleNodePopupToggle(true);
+                this.handlePoetryLogToggle(false);
+                // Now start dreaming mode which will select a node
                 this.visualizer.startDreamingMode();
+                // If there's a current node from previous mode, show popup for it
+                if (this.currentNode && this.popup) {
+                    this.popup.show(this.currentNode);
+                }
                 break;
             case 'haiku':
+                // Only disable manual controls if we were in manual mode
+                if (previousMode === 'manual') {
+                    this.visualizer.enableManualControls(false);
+                }
                 this.visualizer.startHaikuMode();
+                // Enable Poetry Log, disable Node Popup
+                this.config.set('poetryLogEnabled', true);
+                this.config.set('nodePopupEnabled', false);
+                this.controls.updateCheckboxFromConfig('poetryLogEnabled');
+                this.controls.updateCheckboxFromConfig('nodePopupEnabled');
+                this.handlePoetryLogToggle(true);
+                this.handleNodePopupToggle(false);
                 break;
         }
-        console.log(`Camera mode changed to: ${mode}`);
+        console.log(`Camera mode changed from ${previousMode} to ${mode}`);
     }
     /**
      * Set application state

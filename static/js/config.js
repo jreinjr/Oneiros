@@ -12,7 +12,7 @@ export const DEFAULT_CONFIG = {
     nodeSize: 2,
     nodeDistance: 200,
     connectionThickness: 1,
-    highlightSteps: 1,
+    highlightSteps: 0,
     
     // Camera Animation
     cameraDistance: 40,

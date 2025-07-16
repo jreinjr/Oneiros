@@ -558,6 +558,20 @@ export class ControlsManager {
     }
 
     /**
+     * Update checkbox state from config
+     * @param {string} checkboxId - Checkbox ID to update
+     */
+    updateCheckboxFromConfig(checkboxId) {
+        const checkbox = document.getElementById(checkboxId);
+        if (checkbox) {
+            const configValue = this.config.get(checkboxId);
+            if (configValue !== undefined) {
+                checkbox.checked = configValue;
+            }
+        }
+    }
+
+    /**
      * Show or hide the controls panel
      * @param {boolean} visible - Whether to show the panel
      */

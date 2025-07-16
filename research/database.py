@@ -76,7 +76,7 @@ class Tag(Base):
 # Database setup functions
 def get_database_url():
     """Get database URL from environment or use default"""
-    return os.getenv('DATABASE_URL', 'sqlite:///data/beliefgraph.db')
+    return os.getenv('DATABASE_URL', 'sqlite:///data/beliefgraph_filtered.db')
 
 def init_database():
     """Initialize the database and create tables"""

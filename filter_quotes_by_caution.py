@@ -60,6 +60,9 @@ class QuoteFilterManager:
         if self.df is None:
             self.load_csv()
         
+        # Add character count column
+        self.df['char_count'] = self.df['quote'].str.len()
+        
         metrics = {
             'total_quotes': len(self.df),
             'quotes_with_rankings': self.df['caution_ranking'].notna().sum(),
@@ -73,7 +76,11 @@ class QuoteFilterManager:
             'quotes_after_removal': len(self.df[self.df['to_remove'] != 'x']),
             'ranking_distribution': dict(self.df['caution_ranking'].value_counts().sort_index()),
             'authors_total': self.df['author'].nunique(),
-            'authors_after_removal': self.df[self.df['to_remove'] != 'x']['author'].nunique()
+            'authors_after_removal': self.df[self.df['to_remove'] != 'x']['author'].nunique(),
+            'average_char_count': self.df['char_count'].mean(),
+            'median_char_count': self.df['char_count'].median(),
+            'min_char_count': self.df['char_count'].min(),
+            'max_char_count': self.df['char_count'].max()
         }
         
         # Calculate removal percentage
@@ -109,6 +116,11 @@ class QuoteFilterManager:
             bar = "█" * int(percentage / 2)  # Scale bar to fit
             print(f"   Ranking {ranking:2.0f}: {count:4d} quotes ({percentage:5.1f}%) {bar}")
         
+        print(f"\n📏 CHARACTER COUNT STATISTICS:")
+        print(f"   Average length: {metrics['average_char_count']:.0f} characters")
+        print(f"   Median length: {metrics['median_char_count']:.0f} characters")
+        print(f"   Range: {metrics['min_char_count']:.0f} - {metrics['max_char_count']:.0f} characters")
+        
         print(f"\n🗑️  REMOVAL STATISTICS:")
         print(f"   Quotes marked for removal: {metrics['quotes_marked_for_removal']:,}")
         print(f"   Removal percentage: {metrics['removal_percentage']:.1f}%")
@@ -133,6 +145,52 @@ class QuoteFilterManager:
         self.df.to_csv(self.csv_path, index=False)
         
         print(f"✓ Marked {count_to_mark} additional quotes for removal (caution_ranking > {threshold})")
+        print(f"✓ Updated CSV saved to {self.csv_path}")
+        
+        return count_to_mark
+    
+    def mark_for_removal_by_char_count(self, min_chars: Optional[int] = None, max_chars: Optional[int] = None) -> int:
+        """Mark quotes for removal based on character count"""
+        if self.df is None:
+            self.load_csv()
+        
+        # Add character count column if not present
+        if 'char_count' not in self.df.columns:
+            self.df['char_count'] = self.df['quote'].str.len()
+        
+        # Build condition for marking
+        conditions = []
+        if min_chars is not None:
+            conditions.append(self.df['char_count'] < min_chars)
+        if max_chars is not None:
+            conditions.append(self.df['char_count'] > max_chars)
+        
+        if not conditions:
+            print("❌ No character count criteria specified")
+            return 0
+        
+        # Combine conditions with OR
+        to_mark_condition = conditions[0]
+        for cond in conditions[1:]:
+            to_mark_condition = to_mark_condition | cond
+        
+        # Only mark quotes not already marked
+        to_mark = to_mark_condition & (self.df['to_remove'] != 'x')
+        count_to_mark = to_mark.sum()
+        
+        # Mark them
+        self.df.loc[to_mark_condition, 'to_remove'] = 'x'
+        
+        # Save the updated CSV
+        self.df.to_csv(self.csv_path, index=False)
+        
+        criteria = []
+        if min_chars is not None:
+            criteria.append(f"< {min_chars} chars")
+        if max_chars is not None:
+            criteria.append(f"> {max_chars} chars")
+        
+        print(f"✓ Marked {count_to_mark} additional quotes for removal ({' or '.join(criteria)})")
         print(f"✓ Updated CSV saved to {self.csv_path}")
         
         return count_to_mark
@@ -224,7 +282,7 @@ class QuoteFilterManager:
 def main():
     """Main function with command line interface"""
     parser = argparse.ArgumentParser(
-        description="Filter quotes based on caution rankings",
+        description="Filter quotes based on caution rankings and character count",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -234,11 +292,17 @@ Examples:
   # Mark quotes with caution > 5 for removal
   python filter_quotes_by_caution.py --threshold 5
   
+  # Mark quotes shorter than 50 or longer than 500 characters
+  python filter_quotes_by_caution.py --min-chars 50 --max-chars 500
+  
+  # Combine filters: caution > 5 OR length outside 50-500 chars
+  python filter_quotes_by_caution.py --threshold 5 --min-chars 50 --max-chars 500
+  
   # Create filtered database
   python filter_quotes_by_caution.py --create-db
   
-  # Full workflow: mark threshold and create database
-  python filter_quotes_by_caution.py --threshold 5 --create-db
+  # Full workflow: apply filters and create database
+  python filter_quotes_by_caution.py --threshold 5 --min-chars 50 --max-chars 500 --create-db
         """
     )
     
@@ -252,6 +316,18 @@ Examples:
         '--threshold', 
         type=float,
         help='Mark quotes with caution ranking above this threshold for removal'
+    )
+    
+    parser.add_argument(
+        '--min-chars', 
+        type=int,
+        help='Mark quotes with fewer than this many characters for removal'
+    )
+    
+    parser.add_argument(
+        '--max-chars', 
+        type=int,
+        help='Mark quotes with more than this many characters for removal'
     )
     
     parser.add_argument(
@@ -271,18 +347,35 @@ Examples:
         metrics = manager.get_metrics()
         manager.print_metrics(metrics)
         
+        # Track if any marking was done
+        total_marked = 0
+        
         # Mark for removal if threshold provided
         if args.threshold is not None:
-            print(f"\n🎯 Applying threshold: {args.threshold}")
+            print(f"\n🎯 Applying caution threshold: {args.threshold}")
             marked_count = manager.mark_for_removal_above_threshold(args.threshold)
-            
-            # Show updated metrics
-            if marked_count > 0:
-                print("\n📊 UPDATED METRICS AFTER MARKING:")
-                updated_metrics = manager.get_metrics()
-                print(f"   Total marked for removal: {updated_metrics['quotes_marked_for_removal']:,}")
-                print(f"   Quotes remaining: {updated_metrics['quotes_after_removal']:,}")
-                print(f"   Removal percentage: {updated_metrics['removal_percentage']:.1f}%")
+            total_marked += marked_count
+        
+        # Mark for removal based on character count
+        if args.min_chars is not None or args.max_chars is not None:
+            print(f"\n📏 Applying character count filters:")
+            if args.min_chars is not None:
+                print(f"   Minimum characters: {args.min_chars}")
+            if args.max_chars is not None:
+                print(f"   Maximum characters: {args.max_chars}")
+            marked_count = manager.mark_for_removal_by_char_count(
+                min_chars=args.min_chars,
+                max_chars=args.max_chars
+            )
+            total_marked += marked_count
+        
+        # Show updated metrics if any marking was done
+        if total_marked > 0:
+            print("\n📊 UPDATED METRICS AFTER ALL FILTERS:")
+            updated_metrics = manager.get_metrics()
+            print(f"   Total marked for removal: {updated_metrics['quotes_marked_for_removal']:,}")
+            print(f"   Quotes remaining: {updated_metrics['quotes_after_removal']:,}")
+            print(f"   Removal percentage: {updated_metrics['removal_percentage']:.1f}%")
         
         # Create filtered database if requested
         if args.create_db:
