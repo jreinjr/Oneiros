@@ -325,6 +325,26 @@ export class LoggerManager {
             }
         }
     }
+    
+    /**
+     * Show overlay without affecting logger visibility
+     */
+    showOverlay() {
+        const overlay = document.getElementById('poetry-overlay');
+        if (overlay) {
+            overlay.classList.add('visible');
+        }
+    }
+    
+    /**
+     * Hide overlay without affecting logger visibility
+     */
+    hideOverlay() {
+        const overlay = document.getElementById('poetry-overlay');
+        if (overlay) {
+            overlay.classList.remove('visible');
+        }
+    }
 
     /**
      * Check if log panel is visible

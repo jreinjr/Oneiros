@@ -593,6 +593,16 @@ export class GraphVisualizer {
     }
     
     /**
+     * Start haiku mode with callback when transition completes
+     * @param {Function} onComplete - Callback to execute when transition finishes
+     */
+    startHaikuModeWithCallback(onComplete) {
+        if (this.cameraAnimator) {
+            this.cameraAnimator.startHaikuMode(onComplete);
+        }
+    }
+    
+    /**
      * Enable or disable manual camera controls
      * @param {boolean} enabled - Whether to enable manual controls
      */

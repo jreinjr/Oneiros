@@ -244,7 +244,7 @@ export class GraphBehaviorController {
         
         // Dreaming mode parameter callbacks
         ['dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitSpeed', 
-         'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed'].forEach(param => {
+         'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed', 'haikuTransitionDuration'].forEach(param => {
             this.controls.setCallback(param, (controlId, value) => {
                 this.visualizer.updateCameraAnimatorConfig(controlId, value);
             });
@@ -545,6 +545,116 @@ export class GraphBehaviorController {
         if (this.popup) {
             this.popup.updateColors();
         }
+    }
+
+    /**
+     * Handle API message transition from Dreaming to Haiku mode
+     * @param {Array} messages - Array of message objects from API
+     */
+    handleAPIMessageTransition(messages) {
+        // Store the messages for processing
+        this.pendingMessages = messages;
+        
+        // 1. Fade out node popup
+        if (this.popup) {
+            this.popup.fadeOut();
+        }
+        
+        // 2. Transition to Haiku mode with camera movement
+        this.transitionToHaikuMode(() => {
+            // This callback is called when camera transition completes
+            
+            // 3. Process runtime edges immediately after camera arrives
+            messages.forEach(msg => {
+                if (msg.message && msg.message.metadata && msg.message.metadata.nodes && 
+                    msg.message.metadata.nodes.length >= 2) {
+                    const nodeIds = msg.message.metadata.nodes;
+                    if (this.visualizer && window.neo4jIdMapping) {
+                        const originalId1 = nodeIds[0];
+                        const originalId2 = nodeIds[1];
+                        const graphId1 = window.neo4jIdMapping.originalToId[originalId1];
+                        const graphId2 = window.neo4jIdMapping.originalToId[originalId2];
+                        
+                        if (graphId1 && graphId2) {
+                            this.visualizer.addRuntimeEdge(graphId1, graphId2);
+                            console.log(`Added runtime edge between nodes ${graphId1} and ${graphId2}`);
+                        }
+                    }
+                }
+            });
+            
+            // 4. After 2 seconds, fade up overlay
+            setTimeout(() => {
+                if (this.logger) {
+                    this.logger.showOverlay();
+                }
+                
+                // 5. After 1 more second, start typewriter animation
+                setTimeout(() => {
+                    messages.forEach(msg => {
+                        if (msg.message && msg.message.content) {
+                            this.addLogMessage(msg.message, 'info');
+                        }
+                    });
+                    
+                    // 6. After message duration, return to Dreaming mode
+                    const messageDuration = this.config.get('messageDuration') * 1000; // Convert to ms
+                    setTimeout(() => {
+                        this.returnToDreamingMode();
+                    }, messageDuration);
+                    
+                }, 1000); // 1 second after overlay
+            }, 2000); // 2 seconds after camera transition
+        });
+    }
+    
+    /**
+     * Transition to Haiku mode with proper callback
+     * @param {Function} onComplete - Callback when transition completes
+     */
+    transitionToHaikuMode(onComplete) {
+        // Set camera mode to haiku but with special handling
+        this.config.set('cameraMode', 'haiku');
+        this.controls.setCameraMode('haiku');
+        
+        // Disable manual controls if we were in manual mode
+        const previousMode = this.currentCameraMode || 'manual';
+        if (previousMode === 'manual') {
+            this.visualizer.enableManualControls(false);
+        }
+        
+        // Start haiku mode with callback
+        this.visualizer.startHaikuModeWithCallback(onComplete);
+        
+        // Enable Poetry Log, disable Node Popup
+        this.config.set('poetryLogEnabled', true);
+        this.config.set('nodePopupEnabled', false);
+        this.controls.updateCheckboxFromConfig('poetryLogEnabled');
+        this.controls.updateCheckboxFromConfig('nodePopupEnabled');
+        this.handlePoetryLogToggle(true);
+        this.handleNodePopupToggle(false);
+        
+        this.currentCameraMode = 'haiku';
+    }
+    
+    /**
+     * Return to Dreaming mode after message display
+     */
+    returnToDreamingMode() {
+        // Hide overlay first
+        if (this.logger) {
+            this.logger.hideOverlay();
+        }
+        
+        // Clear log entries
+        if (this.logger) {
+            this.logger.clear();
+        }
+        
+        // Switch back to dreaming mode
+        this.config.set('cameraMode', 'dreaming');
+        this.controls.setCameraMode('dreaming');
+        this.handleCameraModeChange('dreaming');
     }
 
     /**

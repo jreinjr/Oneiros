@@ -54,6 +54,7 @@ export const DEFAULT_CONFIG = {
     dreamTransitionDuration: 3,  // seconds
     haikuOrbitRadius: 2000,
     haikuOrbitSpeed: 0.02,   // radians per second
+    haikuTransitionDuration: 2,  // seconds to transition to center
     
     // Popup Position Settings
     popupOffsetX: 50,        // pixels from node center

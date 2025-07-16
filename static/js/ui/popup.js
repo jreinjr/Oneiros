@@ -170,6 +170,31 @@ export class PopupManager {
     }
 
     /**
+     * Fade out the popup immediately
+     */
+    fadeOut() {
+        if (!this.popup) return;
+        
+        // Clear any existing timeouts
+        if (this.showTimeout) {
+            clearTimeout(this.showTimeout);
+            this.showTimeout = null;
+        }
+        if (this.hideTimeout) {
+            clearTimeout(this.hideTimeout);
+            this.hideTimeout = null;
+        }
+        
+        // Immediately remove visible class to trigger fade
+        this.popup.classList.remove('visible');
+        if (this.connectionLine) {
+            this.connectionLine.classList.remove('visible');
+        }
+        
+        this.stopLineUpdates();
+    }
+    
+    /**
      * Hide the popup
      */
     hide() {

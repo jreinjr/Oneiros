@@ -212,13 +212,19 @@ async function pollForScreenMessages() {
             const controller = app.getController();
             
             if (controller && data.messages && data.messages.length > 0) {
-                // Add each screen message to the logger
-                data.messages.forEach(msg => {
-                    if (msg.message && msg.message.content) {
-                        // Display the processed content, not the input
-                        controller.addLogMessage(msg.message, 'info');
-                    }
-                });
+                // Check if we're in Dreaming mode and should transition to Haiku
+                const config = controller.config;
+                if (config && config.get('cameraMode') === 'dreaming') {
+                    // Trigger API message transition
+                    controller.handleAPIMessageTransition(data.messages);
+                } else {
+                    // Otherwise just add messages normally
+                    data.messages.forEach(msg => {
+                        if (msg.message && msg.message.content) {
+                            controller.addLogMessage(msg.message, 'info');
+                        }
+                    });
+                }
             }
         }
     } catch (error) {

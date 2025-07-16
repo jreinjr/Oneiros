@@ -137,7 +137,7 @@ export class CameraAnimator {
         // Let the mode be set explicitly by the caller
     }
     
-    startHaikuMode() {
+    startHaikuMode(onComplete) {
         // Kill any ongoing animations first
         gsap.killTweensOf(this.cameraRig.position);
         gsap.killTweensOf(this.camera.position);
@@ -146,7 +146,7 @@ export class CameraAnimator {
         this.mode = 'haiku';
         this.isDreaming = false;
         this.isHaiku = true;
-        this.transitionToCenter();
+        this.transitionToCenter(onComplete);
     }
     
     selectNewNode() {
@@ -195,31 +195,35 @@ export class CameraAnimator {
         });
     }
     
-    transitionToCenter() {
+    transitionToCenter(onComplete) {
         // Get current positions for smooth transition
         const currentRigPos = this.cameraRig.position.clone();
         const currentCamZ = this.camera.position.z;
+        
+        // Use haikuTransitionDuration for this specific transition
+        const transitionDuration = this.config.get('haikuTransitionDuration');
         
         // Return to center smoothly from current position
         gsap.to(this.cameraRig.position, {
             x: 0, 
             y: 0, 
             z: 0,
-            duration: this.config.get('dreamTransitionDuration'),
-            ease: "power2.inOut"
+            duration: transitionDuration,
+            ease: "power2.inOut",
+            onComplete: onComplete // Call callback when transition completes
         });
         
         // Smoothly transition orbit radius
         gsap.to(this.camera.position, {
             z: this.config.get('haikuOrbitRadius'),
-            duration: this.config.get('dreamTransitionDuration'),
+            duration: transitionDuration,
             ease: "power2.inOut"
         });
         
         // Smoothly transition rotation speed
         gsap.to(this, {
             currentRotationSpeed: this.config.get('haikuOrbitSpeed'),
-            duration: this.config.get('dreamTransitionDuration'),
+            duration: transitionDuration,
             ease: "power2.inOut"
         });
         
