@@ -72,10 +72,12 @@ export class GraphVisualizer {
      */
     initializeCameraAnimator() {
         if (this.graph) {
-            // Pass node click handler to camera animator
+            // Pass node selection handler to camera animator (for dreaming mode)
+            // This should NOT zoom the camera, only select the node
             this.cameraAnimator = new CameraAnimator(this.graph, this.config, (node) => {
                 if (this.onNodeClick) {
-                    this.onNodeClick(node, null);
+                    // Pass a special event to indicate this is from camera animator
+                    this.onNodeClick(node, { fromCameraAnimator: true });
                 }
             });
         }
@@ -389,8 +391,9 @@ export class GraphVisualizer {
     focusCameraOnNode(node, distance = null, duration = null) {
         if (!node || !this.graph) return;
         
-        // If dreaming mode is active, don't use the default focus behavior
-        if (this.config.get('dreamingModeEnabled')) {
+        // Only allow camera movement in manual mode
+        const cameraMode = this.config.get('cameraMode');
+        if (cameraMode !== 'manual') {
             return;
         }
 
@@ -453,7 +456,8 @@ export class GraphVisualizer {
                 this.graph.controls().reset();
             }
             
-            // Update camera animator mode
+            // Only set manual mode if we're actually enabling manual controls
+            // Don't call setManualMode when transitioning between orbit modes
             if (this.cameraAnimator && enabled) {
                 this.cameraAnimator.setManualMode();
             }

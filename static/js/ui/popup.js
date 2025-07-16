@@ -157,9 +157,9 @@ export class PopupManager {
             node.z || 0
         );
         
-        // Position popup with offset
-        const offsetX = 50;
-        const offsetY = -50;
+        // Get configurable offsets
+        const offsetX = this.visualizer.config.get('popupOffsetX') || 50;
+        const offsetY = this.visualizer.config.get('popupOffsetY') || -50;
         
         this.setPosition(
             nodeScreenPos.x + offsetX,
@@ -423,6 +423,15 @@ export class PopupManager {
     updateColors() {
         if (this.isVisible()) {
             this.applyPopupColors();
+        }
+    }
+    
+    /**
+     * Update popup position with current node (called when offset changes)
+     */
+    updatePosition() {
+        if (this.isVisible() && this.currentNode) {
+            this.positionNearNode(this.currentNode);
         }
     }
     

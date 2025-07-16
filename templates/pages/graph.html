@@ -227,6 +227,26 @@
                     </div>
                 </div>
                 <div class="control-item">
+                    <label>Popup Offset X</label>
+                    <div class="slider-container">
+                        <input type="range" id="popupOffsetX" min="-200" max="200" step="10" value="50">
+                        <span class="value-display" id="popupOffsetXValue">50</span>
+                    </div>
+                    <div class="control-description">
+                        Horizontal offset from node (pixels)
+                    </div>
+                </div>
+                <div class="control-item">
+                    <label>Popup Offset Y</label>
+                    <div class="slider-container">
+                        <input type="range" id="popupOffsetY" min="-200" max="200" step="10" value="-50">
+                        <span class="value-display" id="popupOffsetYValue">-50</span>
+                    </div>
+                    <div class="control-description">
+                        Vertical offset from node (negative = up)
+                    </div>
+                </div>
+                <div class="control-item">
                     <label>Log Panel Scale (%)</label>
                     <div class="slider-container">
                         <input type="range" id="logPanelScale" min="75" max="300" step="25" value="100">
@@ -331,6 +351,26 @@
                     </div>
                     <div class="control-description">
                         Rotation speed around scene center
+                    </div>
+                </div>
+                <div class="control-item">
+                    <label>Camera Target X (% of screen)</label>
+                    <div class="slider-container">
+                        <input type="range" id="cameraTargetX" min="0" max="100" step="5" value="50">
+                        <span class="value-display" id="cameraTargetXValue">50</span>
+                    </div>
+                    <div class="control-description">
+                        Horizontal position of orbit center
+                    </div>
+                </div>
+                <div class="control-item">
+                    <label>Camera Target Y (% of screen)</label>
+                    <div class="slider-container">
+                        <input type="range" id="cameraTargetY" min="0" max="100" step="5" value="50">
+                        <span class="value-display" id="cameraTargetYValue">50</span>
+                    </div>
+                    <div class="control-description">
+                        Vertical position of orbit center
                     </div>
                 </div>
             </div>

@@ -37,7 +37,8 @@ export class ControlsManager {
             'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps',
             'messageDuration', 'typingSpeed', 'logPanelScale',
             'dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitSpeed',
-            'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed'
+            'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed',
+            'popupOffsetX', 'popupOffsetY', 'cameraTargetX', 'cameraTargetY'
         ];
 
         sliders.forEach(id => {

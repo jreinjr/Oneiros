@@ -28,6 +28,7 @@ export class GraphBehaviorController {
         // State
         this.graphData = { nodes: [], links: [] };
         this.currentNode = null;
+        this.manualControlsEnabled = true; // Track manual controls state
         
         this.initialize();
     }
@@ -196,6 +197,22 @@ export class GraphBehaviorController {
                 this.visualizer.updateCameraAnimatorConfig(controlId, value);
             });
         });
+        
+        // Popup offset callbacks
+        ['popupOffsetX', 'popupOffsetY'].forEach(param => {
+            this.controls.setCallback(param, (controlId, value) => {
+                if (this.popup) {
+                    this.popup.updatePosition();
+                }
+            });
+        });
+        
+        // Camera target position callbacks
+        ['cameraTargetX', 'cameraTargetY'].forEach(param => {
+            this.controls.setCallback(param, (controlId, value) => {
+                this.visualizer.updateCameraAnimatorConfig(controlId, value);
+            });
+        });
 
         // Message processing mode callbacks
         this.controls.setCallback('userResponseModeChanged', (controlId, value) => {
@@ -286,14 +303,22 @@ export class GraphBehaviorController {
      * @param {Event} event - Mouse event
      */
     handleNodeClick(node, event) {
-        this.focusOnNode(node);
+        // Check if this is from camera animator (dreaming/haiku mode selection)
+        const isFromCameraAnimator = event && event.fromCameraAnimator;
+        
+        // Only zoom camera in manual mode and for actual clicks (not animator selections)
+        const cameraMode = this.config.get('cameraMode');
+        const shouldZoom = cameraMode === 'manual' && !isFromCameraAnimator;
+        
+        this.focusOnNode(node, shouldZoom);
     }
 
     /**
      * Focus on a specific node
      * @param {Object} node - Node to focus on
+     * @param {boolean} zoomCamera - Whether to zoom camera to the node (default: true)
      */
-    focusOnNode(node) {
+    focusOnNode(node, zoomCamera = true) {
         const previousNode = this.currentNode;
         this.currentNode = node;
         this.updateHighlights();
@@ -303,8 +328,10 @@ export class GraphBehaviorController {
             this.popup.show(node);
         }
         
-        // Animate camera to focus on the node
-        this.visualizer.focusCameraOnNode(node);
+        // Animate camera to focus on the node only if requested
+        if (zoomCamera) {
+            this.visualizer.focusCameraOnNode(node);
+        }
         
         // Only log if it's a different node and logging is enabled
         if (!previousNode || previousNode.id !== node.id) {
@@ -507,23 +534,28 @@ export class GraphBehaviorController {
      * @param {string} mode - Camera mode (manual, dreaming, haiku)
      */
     handleCameraModeChange(mode) {
+        // Determine if manual controls should be enabled
+        const shouldEnableManualControls = (mode === 'manual');
+        
+        // Only call enableManualControls if the state is actually changing
+        if (this.manualControlsEnabled !== shouldEnableManualControls) {
+            this.manualControlsEnabled = shouldEnableManualControls;
+            this.visualizer.enableManualControls(this.manualControlsEnabled);
+        }
+        
         switch(mode) {
             case 'manual':
                 this.visualizer.stopDreamingMode();
-                this.visualizer.enableManualControls(true);
                 break;
             case 'dreaming':
-                this.visualizer.enableManualControls(false);
                 this.visualizer.startDreamingMode();
                 break;
             case 'haiku':
-                this.visualizer.enableManualControls(false);
                 this.visualizer.startHaikuMode();
                 break;
         }
         console.log(`Camera mode changed to: ${mode}`);
     }
-
     /**
      * Set application state
      * @param {Object} state - State to restore

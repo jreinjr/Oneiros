@@ -52,7 +52,15 @@ export const DEFAULT_CONFIG = {
     dreamOrbitSpeed: 0.05,   // radians per second
     dreamTransitionDuration: 3,  // seconds
     haikuOrbitRadius: 2000,
-    haikuOrbitSpeed: 0.02    // radians per second
+    haikuOrbitSpeed: 0.02,   // radians per second
+    
+    // Popup Position Settings
+    popupOffsetX: 50,        // pixels from node center
+    popupOffsetY: -50,       // pixels from node center (negative = up)
+    
+    // Camera Target Screen Position (percentage of screen)
+    cameraTargetX: 50,       // 0-100% of screen width
+    cameraTargetY: 50        // 0-100% of screen height
 };
 
 // Theme color configurations with expanded palette
@@ -137,7 +145,11 @@ export const CONFIG_LIMITS = {
     dreamOrbitSpeed: { min: 0.01, max: 0.2, step: 0.01 },
     dreamTransitionDuration: { min: 1, max: 10, step: 0.5 },
     haikuOrbitRadius: { min: 1000, max: 5000, step: 100 },
-    haikuOrbitSpeed: { min: 0.005, max: 0.1, step: 0.005 }
+    haikuOrbitSpeed: { min: 0.005, max: 0.1, step: 0.005 },
+    popupOffsetX: { min: -200, max: 200, step: 10 },
+    popupOffsetY: { min: -200, max: 200, step: 10 },
+    cameraTargetX: { min: 0, max: 100, step: 5 },
+    cameraTargetY: { min: 0, max: 100, step: 5 }
 };
 
 // Color component definitions for UI
