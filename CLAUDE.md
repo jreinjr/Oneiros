@@ -2,13 +2,25 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## RULES
+## Project Overview
 
-We are using a venv in this repo. Always be sure that the .venv is active before running any Python commands.
+Oneiros is a philosophical knowledge graph application combining:
+- **Flask backend** with async message processing and LLM integration (OpenAI/Ollama)
+- **3D graph visualization** using Three.js/ForceGraph3D with dynamic edge creation
+- **Hybrid database** architecture (SQLite for persistence, Neo4j for graph/vector search)
+- **Theme-based system** organizing content around truth/love/beauty concepts
 
-### Required Environment Variables
+## Development Commands
+
+### Environment Setup
 ```bash
-# .env file (required for all components)
+# Activate virtual environment (REQUIRED before any Python commands)
+source venv/bin/activate  # or source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Required environment variables (.env file)
 OPENAI_API_KEY=your_openai_api_key
 SECRET_KEY=your_flask_secret_key
 NEO4J_URI=neo4j://localhost:7687
@@ -16,62 +28,81 @@ NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=your_neo4j_password
 ```
 
-## Component Architecture
+### Running the Application
+```bash
+# Start Neo4j database
+./scripts/start-neo4j.sh
 
-### Research Agent (research/ directory)
-- **SQLAlchemy models** with Neo4j migration scripts (research/database.py)
-- **OpenAI integration** for content generation and structured outputs (research/author_processor.py)
-- **Vector search** using sentence-transformers for semantic similarity (neo4j/neo4j_vector_index.py)
-- **Batch processing** with logging and error handling (research/test_batch_authors.py)
-
-### Web Interface (Flask application)
-- **Dynamic routing** with component templates (app.py)
-- **Author and quote display** with theme-based organization (templates/)
-- **Neo4j configuration API** for secure credential management (/api/neo4j-config)
-- **Responsive design** with sidebar navigation (static/css/main.css)
-
-### 3D Graph Visualization (static/js/)
-- **Modular JavaScript** with behavior controllers and event system (static/js/GraphBehaviorController.js)
-- **Neo4j direct connection** for real-time graph data (static/js/graph/neo4j-connector.js)
-- **Three.js rendering** with interactive orbit, zoom, filtering (static/js/graph/visualizer.js)
-- **Theme-based visualization** with color-coded truth/love/beauty nodes (static/css/styles.css)
-
-## Directory Structure
-
-```
-/home/jrein/Oneiros/
-├── app.py                    # Main Flask application with all routes
-├── requirements.txt          # Combined Python dependencies
-├── CLAUDE.md                 # This documentation file
-├── data/                     # Data files and SQLite database
-│   ├── sources.csv          # Author list for processing
-│   ├── beliefgraph.db       # SQLite database
-│   └── logs/                # Processing logs
-├── research/                 # Research agent components
-│   ├── database.py          # SQLAlchemy models and database operations
-│   ├── author_processor.py  # Main processing script
-│   ├── data_models.py       # Pydantic data models
-│   ├── bibliography_generator.py
-│   ├── quote_generator.py
-│   └── test_*.py           # Test scripts
-├── neo4j/                   # Neo4j utilities
-│   ├── neo4j_migration.py   # SQLite to Neo4j migration
-│   ├── neo4j_queries.py     # Sample queries
-│   ├── neo4j_vector_index.py # Vector search setup
-│   └── test_vector_search.py # Vector search testing
-├── templates/               # Flask templates
-│   ├── base.html           # Base template with navigation
-│   ├── components/         # Reusable components
-│   └── pages/              # Page templates (index, author, graph)
-└── static/                 # Web assets
-    ├── css/                # Stylesheets
-    └── js/                 # JavaScript including 3D visualization
-        ├── graph/          # 3D graph components
-        └── ui/             # UI components
+# Start Flask development server
+python app.py  # Runs on http://localhost:5000 with debug=True
 ```
 
-# important-instruction-reminders
-Do what has been asked; nothing more, nothing less.
-NEVER create files unless they're absolutely necessary for achieving your goal.
-ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+### Testing
+```bash
+# Run specific test suites
+python research/test_single_author.py         # Test single author processing
+python research/test_batch_authors.py          # Test batch processing
+python research/test_batch_authors.py --custom # Custom author selection
+python research/test_database.py               # Test database operations
+python neo4j/test_vector_search.py             # Test vector search
+python scripts/test_message_processing.py      # Test message handling
+python scripts/test_caution_ranker.py          # Test caution ranking
+
+# Run pytest if available
+pytest
+```
+
+### Database Operations
+```bash
+# SQLite to Neo4j migration
+python neo4j/neo4j_migration.py
+
+# Setup Neo4j vector indices
+python neo4j/neo4j_vector.py
+
+# Process authors from CSV
+python research/author_processor.py
+```
+
+## Architecture Patterns
+
+### Message Processing Pipeline
+- **Async processing** using ThreadPoolExecutor prevents UI blocking
+- **Multiple modes**: echo, LLM (GPT-4/Ollama), quote, RAG (vector search + generation)
+- **Queue management** prevents LLM request flooding
+- **Separate handlers** for user responses vs screen text display
+
+### Dynamic Graph System
+- **Runtime edge creation** based on user interactions and message content
+- **Force-directed layout** with configurable physics (app.py:1172-1200)
+- **Theme-based coloring** affects both nodes and UI elements
+- **Camera modes**: manual control, "dreaming" (orbital), "haiku" (wider orbit)
+
+### Frontend Architecture
+- **Modular JavaScript** with behavior controllers (static/js/GraphBehaviorController.js)
+- **Event system** for graph interactions (static/js/EventSystem.js)
+- **WebSocket-like updates** via polling for real-time graph changes
+- **Direct Neo4j connection** from browser for graph data (when configured)
+
+### Database Strategy
+- **SQLite**: Primary storage for authors/quotes, auto-initialized on startup
+- **Neo4j**: Graph relationships, vector embeddings, real-time queries
+- **Migration path**: SQLite → Neo4j with preserved relationships
+- **Vector search**: Sentence-transformers embeddings for semantic similarity
+
+## Key Implementation Details
+
+### Theme System
+- Three philosophical themes stored as JSON configurations
+- Runtime theme switching affects graph colors and content generation
+- Theme context passed to LLMs for aligned responses
+
+### Author Processing
+- Structured output using OpenAI's JSON mode
+- Batch processing with retry logic and detailed logging
+- Generated content includes biography, quotes, and semantic connections
+
+### Security Considerations
+- Neo4j credentials configurable via API (never stored in frontend)
+- Flask sessions for user state management
+- Environment variables for sensitive configuration

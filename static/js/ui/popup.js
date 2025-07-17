@@ -12,10 +12,13 @@ export class PopupManager {
         this.config = config;
         
         // DOM elements
+        this.wrapper = document.getElementById('node-popup-wrapper');
         this.popup = document.getElementById('node-popup');
         this.popupTitle = document.getElementById('node-popup-title');
         this.popupName = document.getElementById('node-popup-name');
         this.connectionLine = document.querySelector('.connection-path');
+        this.leftQuote = document.querySelector('.popup-quote-left');
+        this.rightQuote = document.querySelector('.popup-quote-right');
         
         // State
         this.currentNode = null;
@@ -33,7 +36,7 @@ export class PopupManager {
      * Initialize popup functionality
      */
     initialize() {
-        if (!this.popup || !this.popupName || !this.connectionLine) {
+        if (!this.wrapper || !this.popup || !this.popupName || !this.connectionLine) {
             console.warn('Popup elements not found in DOM');
             return;
         }
@@ -48,7 +51,7 @@ export class PopupManager {
     setupDragging() {
         this.popup.addEventListener('mousedown', (e) => {
             this.isDragging = true;
-            const rect = this.popup.getBoundingClientRect();
+            const rect = this.wrapper.getBoundingClientRect();
             this.dragOffset.x = e.clientX - rect.left;
             this.dragOffset.y = e.clientY - rect.top;
             e.preventDefault();
@@ -93,7 +96,12 @@ export class PopupManager {
         // Update popup title with author if available
         if (this.popupTitle) {
             if (node.author) {
-                this.popupTitle.textContent = node.author;
+                // Create author text with birth location if available
+                let titleContent = node.author;
+                if (node.author_birth_location) {
+                    titleContent = `${node.author} <span class="popup-birth-location">- ${node.author_birth_location}</span>`;
+                }
+                this.popupTitle.innerHTML = titleContent;
             } else {
                 this.popupTitle.textContent = 'Selected Node';
             }
@@ -141,7 +149,7 @@ export class PopupManager {
         
         // Show popup after delay
         this.showTimeout = setTimeout(() => {
-            this.popup.classList.add('visible');
+            this.wrapper.classList.add('visible');
             if (this.connectionLine) {
                 this.connectionLine.classList.add('visible');
             }
@@ -155,7 +163,7 @@ export class PopupManager {
                 
                 if (hideDelay > 0) {
                     this.hideTimeout = setTimeout(() => {
-                        this.popup.classList.remove('visible');
+                        this.wrapper.classList.remove('visible');
                         if (this.connectionLine) {
                             this.connectionLine.classList.remove('visible');
                         }
@@ -186,7 +194,7 @@ export class PopupManager {
         }
         
         // Immediately remove visible class to trigger fade
-        this.popup.classList.remove('visible');
+        this.wrapper.classList.remove('visible');
         if (this.connectionLine) {
             this.connectionLine.classList.remove('visible');
         }
@@ -210,7 +218,7 @@ export class PopupManager {
             this.hideTimeout = null;
         }
         
-        this.popup.classList.remove('visible');
+        this.wrapper.classList.remove('visible');
         if (this.connectionLine) {
             this.connectionLine.classList.remove('visible');
         }
@@ -259,9 +267,9 @@ export class PopupManager {
         this.position.x = x;
         this.position.y = y;
         
-        if (this.popup) {
-            this.popup.style.left = x + 'px';
-            this.popup.style.top = y + 'px';
+        if (this.wrapper) {
+            this.wrapper.style.left = x + 'px';
+            this.wrapper.style.top = y + 'px';
         }
     }
 
@@ -285,7 +293,7 @@ export class PopupManager {
      * @returns {boolean} Whether popup is visible
      */
     isVisible() {
-        return this.popup && this.popup.classList.contains('visible');
+        return this.wrapper && this.wrapper.classList.contains('visible');
     }
 
     /**
@@ -333,6 +341,7 @@ export class PopupManager {
         );
         
         // Get popup center position
+        const wrapperRect = this.wrapper.getBoundingClientRect();
         const popupRect = this.popup.getBoundingClientRect();
         const popupCenterX = popupRect.left + popupRect.width / 2;
         const popupCenterY = popupRect.top + popupRect.height / 2;
@@ -498,6 +507,20 @@ export class PopupManager {
         if (this.connectionLine) {
             this.connectionLine.style.setProperty('stroke', colors.popupPrimary || '#4CAF50', 'important');
         }
+        
+        // Apply decorative quote colors
+        if (this.leftQuote) {
+            this.leftQuote.style.setProperty('color', colors.popupPrimary || '#4CAF50', 'important');
+        }
+        if (this.rightQuote) {
+            this.rightQuote.style.setProperty('color', colors.popupPrimary || '#4CAF50', 'important');
+        }
+        
+        // Apply birth location color to all elements with class popup-birth-location
+        const birthLocationElements = this.popup.querySelectorAll('.popup-birth-location');
+        birthLocationElements.forEach(element => {
+            element.style.setProperty('color', colors.popupBirthLocation || '#81C784', 'important');
+        });
     }
     
     /**
@@ -548,10 +571,13 @@ export class PopupManager {
         
         this.visualizer = null;
         this.currentNode = null;
+        this.wrapper = null;
         this.popup = null;
         this.popupTitle = null;
         this.popupName = null;
         this.connectionLine = null;
+        this.leftQuote = null;
+        this.rightQuote = null;
         this.contentTemplate = null;
     }
 }

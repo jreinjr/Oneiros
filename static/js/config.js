@@ -86,6 +86,7 @@ export const THEME_COLORS = {
         popupPrimary: '#2196F3',
         popupSecondary: '#1976D2',
         popupBackground: 'rgba(0, 0, 0, 0.9)',
+        popupBirthLocation: '#64B5F6',
         // Log colors
         logPrimary: '#2196F3',
         logSecondary: '#1976D2',
@@ -107,6 +108,7 @@ export const THEME_COLORS = {
         popupPrimary: '#4CAF50',
         popupSecondary: '#388E3C',
         popupBackground: 'rgba(0, 0, 0, 0.9)',
+        popupBirthLocation: '#81C784',
         // Log colors
         logPrimary: '#4CAF50',
         logSecondary: '#388E3C',
@@ -128,6 +130,7 @@ export const THEME_COLORS = {
         popupPrimary: '#F44336',
         popupSecondary: '#D32F2F',
         popupBackground: 'rgba(0, 0, 0, 0.9)',
+        popupBirthLocation: '#EF5350',
         // Log colors
         logPrimary: '#F44336',
         logSecondary: '#D32F2F',

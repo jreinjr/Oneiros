@@ -80,6 +80,7 @@ class Neo4jMigration:
                         CREATE (q:Quote {
                             text: $text,
                             author_name: $author_name,
+                            author_birth_location: $author_birth_location,
                             tags: $tags,
                             source_link: $source_link,
                             original_id: $original_id
@@ -88,6 +89,7 @@ class Neo4jMigration:
                     """, 
                     text=quote.quote_text,
                     author_name=author.name,
+                    author_birth_location=author.birth_location or "",
                     tags=tag_names,
                     source_link=quote.source_link or "",
                     original_id=quote.original_id if hasattr(quote, 'original_id') else quote.id
