@@ -12,7 +12,7 @@
   "incrementalEdgeWeight": 0.2,
   "poetryLogEnabled": false,
   "nodePopupEnabled": true,
-  "popupOffsetX": 200,
+  "popupOffsetX": 170,
   "popupOffsetY": 190,
   "logPanelScale": 100,
   "messageDuration": 12,
@@ -23,12 +23,12 @@
   "dreamOrbitDuration": 18,
   "dreamOrbitSpeed": 0.03,
   "dreamTransitionDuration": 3,
-  "haikuOrbitRadius": 3100,
+  "haikuOrbitRadius": 3900,
   "haikuOrbitSpeed": 0.02,
   "haikuTransitionDuration": 2,
-  "haikuDistanceMultiplier": 2,
+  "haikuDistanceMultiplier": 5,
   "cameraTargetX": 50,
   "cameraTargetY": 50,
   "currentTheme": "beauty",
-  "timestamp": "2025-07-17T14:35:11.772Z"
+  "timestamp": "2025-07-17T14:51:01.333Z"
 }

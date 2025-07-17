@@ -68,47 +68,52 @@ export class CameraAnimator {
         const target = new THREE.Vector3();
         this.cameraRig.getWorldPosition(target);
         
-        // Calculate screen-space offset for camera target
-        const targetX = this.config.get('cameraTargetX') || 50; // Default to center (50%)
-        const targetY = this.config.get('cameraTargetY') || 50;
-        
-        // Convert percentage to normalized device coordinates (-1 to 1)
-        const ndcX = (targetX / 100) * 2 - 1;
-        const ndcY = -((targetY / 100) * 2 - 1); // Invert Y for screen coordinates
-        
-        // Get camera properties
-        const cameraWorldPos = new THREE.Vector3();
-        this.camera.getWorldPosition(cameraWorldPos);
-        const distance = cameraWorldPos.distanceTo(target);
-        
-        // Calculate offset in world space based on camera view
-        const fov = this.camera.fov * Math.PI / 180;
-        const aspect = this.camera.aspect || 1;
-        
-        // Calculate offset distances
-        const halfHeight = Math.tan(fov / 2) * distance;
-        const halfWidth = halfHeight * aspect;
-        
-        // Apply offset to target position
-        const right = new THREE.Vector3();
-        const up = new THREE.Vector3();
-        this.camera.getWorldDirection(new THREE.Vector3()).normalize();
-        this.camera.up.clone().normalize();
-        
-        // Get camera's right and up vectors in world space
-        const cameraMatrix = new THREE.Matrix4();
-        this.camera.matrixWorld.extractRotation(cameraMatrix);
-        right.set(1, 0, 0).applyMatrix4(cameraMatrix);
-        up.set(0, 1, 0).applyMatrix4(cameraMatrix);
-        
-        // Apply the offset
-        const offsetX = -ndcX * halfWidth;  // Negative to make right = positive X
-        const offsetY = -ndcY * halfHeight; // Negative to make up = positive Y
-        target.add(right.multiplyScalar(offsetX));
-        target.add(up.multiplyScalar(offsetY));
-        
-        // Look at the offset target
-        this.camera.lookAt(target);
+        // In Haiku mode, look directly at the rig position without any offset
+        if (this.isHaiku) {
+            this.camera.lookAt(target);
+        } else {
+            // Calculate screen-space offset for camera target
+            const targetX = this.config.get('cameraTargetX') || 50; // Default to center (50%)
+            const targetY = this.config.get('cameraTargetY') || 50;
+            
+            // Convert percentage to normalized device coordinates (-1 to 1)
+            const ndcX = (targetX / 100) * 2 - 1;
+            const ndcY = -((targetY / 100) * 2 - 1); // Invert Y for screen coordinates
+            
+            // Get camera properties
+            const cameraWorldPos = new THREE.Vector3();
+            this.camera.getWorldPosition(cameraWorldPos);
+            const distance = cameraWorldPos.distanceTo(target);
+            
+            // Calculate offset in world space based on camera view
+            const fov = this.camera.fov * Math.PI / 180;
+            const aspect = this.camera.aspect || 1;
+            
+            // Calculate offset distances
+            const halfHeight = Math.tan(fov / 2) * distance;
+            const halfWidth = halfHeight * aspect;
+            
+            // Apply offset to target position
+            const right = new THREE.Vector3();
+            const up = new THREE.Vector3();
+            this.camera.getWorldDirection(new THREE.Vector3()).normalize();
+            this.camera.up.clone().normalize();
+            
+            // Get camera's right and up vectors in world space
+            const cameraMatrix = new THREE.Matrix4();
+            this.camera.matrixWorld.extractRotation(cameraMatrix);
+            right.set(1, 0, 0).applyMatrix4(cameraMatrix);
+            up.set(0, 1, 0).applyMatrix4(cameraMatrix);
+            
+            // Apply the offset
+            const offsetX = -ndcX * halfWidth;  // Negative to make right = positive X
+            const offsetY = -ndcY * halfHeight; // Negative to make up = positive Y
+            target.add(right.multiplyScalar(offsetX));
+            target.add(up.multiplyScalar(offsetY));
+            
+            // Look at the offset target
+            this.camera.lookAt(target);
+        }
         
         // Handle dream mode node transitions
         if (this.isDreaming) {

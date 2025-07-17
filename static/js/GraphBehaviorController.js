@@ -568,17 +568,33 @@ export class GraphBehaviorController {
         
         // Extract node IDs from the first message that has them
         let nodePositions = null;
+        console.log('[Haiku Debug] Processing messages for node positions:', messages);
+        if (messages && messages.length > 0) {
+            console.log('[Haiku Debug] First message structure:', messages[0]);
+            console.log('[Haiku Debug] Message content:', messages[0].message);
+            if (messages[0].message && messages[0].message.metadata) {
+                console.log('[Haiku Debug] Metadata:', messages[0].message.metadata);
+                console.log('[Haiku Debug] Nodes in metadata:', messages[0].message.metadata.nodes);
+                console.log('[Haiku Debug] Number of nodes:', messages[0].message.metadata.nodes ? messages[0].message.metadata.nodes.length : 0);
+            }
+        }
         for (const msg of messages) {
             if (msg.message && msg.message.metadata && msg.message.metadata.nodes && 
-                msg.message.metadata.nodes.length >= 2) {
+                msg.message.metadata.nodes.length >= 1) {  // Changed from >= 2 to >= 1
                 const nodeIds = msg.message.metadata.nodes;
+                console.log('[Haiku Debug] Processing nodes array with length:', nodeIds.length);
+                console.log('[Haiku Debug] Found node IDs in metadata:', nodeIds);
                 if (this.visualizer && window.neo4jIdMapping) {
+                    console.log('[Haiku Debug] neo4jIdMapping exists, checking mappings...');
+                    console.log('[Haiku Debug] Available mappings:', Object.keys(window.neo4jIdMapping.originalToId));
                     const originalId1 = nodeIds[0];
                     const originalId2 = nodeIds[1];
                     const graphId1 = window.neo4jIdMapping.originalToId[originalId1];
                     const graphId2 = window.neo4jIdMapping.originalToId[originalId2];
+                    console.log('[Haiku Debug] Mapped IDs:', { originalId1, originalId2, graphId1, graphId2 });
                     
-                    if (graphId1 && graphId2) {
+                    // Handle case where we have 2 nodes
+                    if (nodeIds.length >= 2 && graphId1 && graphId2) {
                         // Get the actual node objects
                         const node1 = this.graphData.nodes.find(n => n.id == graphId1);
                         const node2 = this.graphData.nodes.find(n => n.id == graphId2);
@@ -588,7 +604,23 @@ export class GraphBehaviorController {
                                 { x: node1.x || 0, y: node1.y || 0, z: node1.z || 0 },
                                 { x: node2.x || 0, y: node2.y || 0, z: node2.z || 0 }
                             ];
+                            console.log('[Haiku Debug] Found 2 node positions:', nodePositions);
                             break; // Found nodes, stop looking
+                        } else {
+                            console.log('[Haiku Debug] Could not find nodes in graph data', { node1, node2 });
+                        }
+                    } 
+                    // Handle case where we only have 1 node
+                    else if (nodeIds.length === 1 && graphId1) {
+                        const node1 = this.graphData.nodes.find(n => n.id == graphId1);
+                        if (node1) {
+                            // For single node, duplicate the position so camera centers on it
+                            nodePositions = [
+                                { x: node1.x || 0, y: node1.y || 0, z: node1.z || 0 },
+                                { x: node1.x || 0, y: node1.y || 0, z: node1.z || 0 }
+                            ];
+                            console.log('[Haiku Debug] Found 1 node, using its position:', nodePositions);
+                            break;
                         }
                     }
                 }
@@ -601,6 +633,7 @@ export class GraphBehaviorController {
         }
         
         // 2. Transition to Haiku mode with camera movement
+        console.log('[Haiku Debug] Transitioning to Haiku mode with positions:', nodePositions);
         this.transitionToHaikuMode(nodePositions, () => {
             // This callback is called when camera transition completes
             

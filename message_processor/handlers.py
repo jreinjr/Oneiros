@@ -182,9 +182,13 @@ class QuoteHandler(BaseHandler):
                         "error": "No similar quotes found"
                     }
                 
+                # Log the number of results for debugging
+                logger.info(f"Quote search returned {len(results)} results")
+                
                 # Return top quote with metadata containing both node IDs
                 result = results[0]
                 node_ids = [str(r['node_id']) for r in results]
+                logger.info(f"Node IDs collected: {node_ids}")
                 
                 return {
                     "type": "quote",
