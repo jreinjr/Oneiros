@@ -5,6 +5,7 @@ Coordinates message processing through different handlers with priority queuing
 for LLM requests. Handles both user response and screen text processing.
 """
 
+import os
 import logging
 import asyncio
 from typing import Dict, Any, Optional, Tuple
@@ -12,6 +13,10 @@ from dataclasses import dataclass
 from sentence_transformers import SentenceTransformer
 from .handlers import HandlerFactory, BaseHandler
 from .queue_manager import LLMQueueManager, Priority
+
+# Set the cache directory for offline sentence-transformers models
+MODEL_CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models_cache')
+os.environ['SENTENCE_TRANSFORMERS_HOME'] = MODEL_CACHE_DIR
 
 logger = logging.getLogger(__name__)
 

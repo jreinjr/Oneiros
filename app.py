@@ -11,6 +11,11 @@ import threading
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
+
+# Set the cache directory for offline sentence-transformers models
+MODEL_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models_cache')
+os.environ['SENTENCE_TRANSFORMERS_HOME'] = MODEL_CACHE_DIR
+
 from message_processor import MessageProcessor
 
 # Initialize Flask app

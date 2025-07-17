@@ -4,9 +4,14 @@ Test script to verify that sentence transformer model optimization works correct
 This script tests that a single model instance is shared across handlers.
 """
 
+import os
 import asyncio
 import logging
 from message_processor import MessageProcessor
+
+# Set the cache directory for offline sentence-transformers models
+MODEL_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models_cache')
+os.environ['SENTENCE_TRANSFORMERS_HOME'] = MODEL_CACHE_DIR
 
 # Configure logging
 logging.basicConfig(
