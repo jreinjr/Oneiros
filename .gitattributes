@@ -3,7 +3,6 @@
 #  – Built for cross-platform & multi-language repos                         –
 #  – Adjust or comment-out any pattern you don’t need                        –
 ###############################################################################
-
 ########## 1. Raster images (lossy + lossless) ###############################
 *.png      filter=lfs diff=lfs merge=lfs -text
 *.jpg
@@ -18,7 +17,6 @@
 *.webp
 *.heic
 *.heif
-
 ########## 2. Raw & high-bit-depth photos ####################################
 *.arw
 *.cr2
@@ -27,7 +25,6 @@
 *.orf
 *.rw2
 *.srw
-
 ########## 3. Vector / design files (often huge) #############################
 *.psd
 *.ai
@@ -37,7 +34,6 @@
 *.sketch
 *.fig
 *.xd
-
 ########## 4. Audio ###########################################################
 *.wav
 *.flac
@@ -51,7 +47,6 @@
 *.aac
 *.m4a
 *.wma
-
 ########## 5. Video ###########################################################
 *.mp4
 *.m4v
@@ -69,7 +64,6 @@
 *.mts
 *.m2ts
 *.ts
-
 ########## 6. 3-D / CAD / game assets ########################################
 *.blend
 *.fbx
@@ -89,7 +83,6 @@
 *.asset
 *.mat
 *.cubemap
-
 ########## 7. Scientific / data blobs ########################################
 *.h5
 *.hdf5
@@ -101,7 +94,6 @@
 *.feather
 *.pkl
 *.csv.gz   
-
 ########## 8. Office / spreadsheet / DTP #####################################
 *.xlsx
 *.xlsb
@@ -112,7 +104,6 @@
 *.odp
 *.pptx
 *.key
-
 ########## 9. Archives & installers ##########################################
 *.zip
 *.7z
@@ -129,13 +120,11 @@
 *.msi
 *.apk
 *.ipa
-
 ########## 10. Fonts (often bulky binaries) ##################################
 *.ttf
 *.otf
 *.woff
 *.woff2
-
 ########## 11. Misc. binaries often checked in ###############################
 *.iso
 *.img
@@ -149,7 +138,6 @@
 *.ear
 *.a
 *.lib
-
 ###############################################################################
 # NOTES
 # -----
@@ -163,3 +151,4 @@
 # • After adding this file, run:   git lfs install   then recommit anything
 #   you want retroactively moved into LFS (git lfs migrate import …).
 ###############################################################################
+model-cache/* filter=lfs diff=lfs merge=lfs -text
