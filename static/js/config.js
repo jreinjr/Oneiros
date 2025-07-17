@@ -57,6 +57,7 @@ export const DEFAULT_CONFIG = {
     haikuOrbitRadius: 2000,
     haikuOrbitSpeed: 0.02,   // radians per second
     haikuTransitionDuration: 2,  // seconds to transition to center
+    haikuDistanceMultiplier: 10,  // multiplier for distance-based orbit radius
     
     // Popup Position Settings
     popupOffsetX: 50,        // pixels from node center
@@ -160,6 +161,7 @@ export const CONFIG_LIMITS = {
     popupDisplayDuration: { min: 0.1, max: 1.0, step: 0.05 },
     haikuOrbitRadius: { min: 1000, max: 10000, step: 100 },
     haikuOrbitSpeed: { min: 0.005, max: 0.1, step: 0.005 },
+    haikuDistanceMultiplier: { min: 1, max: 50, step: 1 },
     popupOffsetX: { min: -200, max: 200, step: 10 },
     popupOffsetY: { min: -200, max: 200, step: 10 },
     cameraTargetX: { min: 0, max: 100, step: 5 },
@@ -401,6 +403,7 @@ export class ConfigManager {
                 haikuOrbitRadius: this.get('haikuOrbitRadius'),
                 haikuOrbitSpeed: this.get('haikuOrbitSpeed'),
                 haikuTransitionDuration: this.get('haikuTransitionDuration'),
+                haikuDistanceMultiplier: this.get('haikuDistanceMultiplier'),
                 cameraTargetX: this.get('cameraTargetX'),
                 cameraTargetY: this.get('cameraTargetY'),
                 
@@ -525,6 +528,7 @@ export class ConfigManager {
             haikuOrbitRadius: this.get('haikuOrbitRadius'),
             haikuOrbitSpeed: this.get('haikuOrbitSpeed'),
             haikuTransitionDuration: this.get('haikuTransitionDuration'),
+            haikuDistanceMultiplier: this.get('haikuDistanceMultiplier'),
             cameraTargetX: this.get('cameraTargetX'),
             cameraTargetY: this.get('cameraTargetY'),
             

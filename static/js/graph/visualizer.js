@@ -588,17 +588,18 @@ export class GraphVisualizer {
      */
     startHaikuMode() {
         if (this.cameraAnimator) {
-            this.cameraAnimator.startHaikuMode();
+            this.cameraAnimator.startHaikuMode(null);
         }
     }
     
     /**
      * Start haiku mode with callback when transition completes
+     * @param {Array|null} nodePositions - Array of two node positions for camera targeting
      * @param {Function} onComplete - Callback to execute when transition finishes
      */
-    startHaikuModeWithCallback(onComplete) {
+    startHaikuModeWithCallback(nodePositions, onComplete) {
         if (this.cameraAnimator) {
-            this.cameraAnimator.startHaikuMode(onComplete);
+            this.cameraAnimator.startHaikuMode(nodePositions, onComplete);
         }
     }
     

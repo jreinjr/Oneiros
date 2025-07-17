@@ -68,7 +68,7 @@ export class ControlsManager {
             'messageDuration', 'typingSpeed', 'logPanelScale', 'overlayOpacity',
             'dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitDurationVariance', 'dreamOrbitSpeed',
             'dreamTransitionDuration', 'popupDisplayDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed',
-            'haikuTransitionDuration', 'popupOffsetX', 'popupOffsetY', 'cameraTargetX', 'cameraTargetY',
+            'haikuTransitionDuration', 'haikuDistanceMultiplier', 'popupOffsetX', 'popupOffsetY', 'cameraTargetX', 'cameraTargetY',
             'defaultEdgeWeight', 'runtimeEdgeWeight', 'incrementalEdgeWeight'
         ];
 

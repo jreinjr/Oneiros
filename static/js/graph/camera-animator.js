@@ -138,7 +138,7 @@ export class CameraAnimator {
         // Let the mode be set explicitly by the caller
     }
     
-    startHaikuMode(onComplete) {
+    startHaikuMode(nodePositions, onComplete) {
         // Kill any ongoing animations first
         gsap.killTweensOf(this.cameraRig.position);
         gsap.killTweensOf(this.camera.position);
@@ -147,7 +147,7 @@ export class CameraAnimator {
         this.mode = 'haiku';
         this.isDreaming = false;
         this.isHaiku = true;
-        this.transitionToCenter(onComplete);
+        this.transitionToCenter(nodePositions, onComplete);
     }
     
     selectNewNode() {
@@ -201,7 +201,7 @@ export class CameraAnimator {
         });
     }
     
-    transitionToCenter(onComplete) {
+    transitionToCenter(nodePositions, onComplete) {
         // Get current positions for smooth transition
         const currentRigPos = this.cameraRig.position.clone();
         const currentCamZ = this.camera.position.z;
@@ -209,11 +209,32 @@ export class CameraAnimator {
         // Use haikuTransitionDuration for this specific transition
         const transitionDuration = this.config.get('haikuTransitionDuration');
         
-        // Return to center smoothly from current position
+        // Calculate target position and orbit radius
+        let targetX = 0, targetY = 0, targetZ = 0;
+        let orbitRadius = this.config.get('haikuOrbitRadius'); // Default
+        
+        if (nodePositions && nodePositions.length >= 2) {
+            // Calculate midpoint between the two nodes
+            targetX = (nodePositions[0].x + nodePositions[1].x) / 2;
+            targetY = (nodePositions[0].y + nodePositions[1].y) / 2;
+            targetZ = (nodePositions[0].z + nodePositions[1].z) / 2;
+            
+            // Calculate distance between nodes
+            const dx = nodePositions[1].x - nodePositions[0].x;
+            const dy = nodePositions[1].y - nodePositions[0].y;
+            const dz = nodePositions[1].z - nodePositions[0].z;
+            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            
+            // Calculate orbit radius based on distance and multiplier
+            const multiplier = this.config.get('haikuDistanceMultiplier');
+            orbitRadius = distance * multiplier;
+        }
+        
+        // Transition to calculated position smoothly from current position
         gsap.to(this.cameraRig.position, {
-            x: 0, 
-            y: 0, 
-            z: 0,
+            x: targetX, 
+            y: targetY, 
+            z: targetZ,
             duration: transitionDuration,
             ease: "power2.inOut",
             onComplete: onComplete // Call callback when transition completes
@@ -221,7 +242,7 @@ export class CameraAnimator {
         
         // Smoothly transition orbit radius
         gsap.to(this.camera.position, {
-            z: this.config.get('haikuOrbitRadius'),
+            z: orbitRadius,
             duration: transitionDuration,
             ease: "power2.inOut"
         });

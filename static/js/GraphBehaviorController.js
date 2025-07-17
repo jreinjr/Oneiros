@@ -253,7 +253,7 @@ export class GraphBehaviorController {
         
         // Dreaming mode parameter callbacks
         ['dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitSpeed', 
-         'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed', 'haikuTransitionDuration'].forEach(param => {
+         'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed', 'haikuTransitionDuration', 'haikuDistanceMultiplier'].forEach(param => {
             this.controls.setCallback(param, (controlId, value) => {
                 this.visualizer.updateCameraAnimatorConfig(controlId, value);
             });
@@ -566,13 +566,42 @@ export class GraphBehaviorController {
         // Store the messages for processing
         this.pendingMessages = messages;
         
+        // Extract node IDs from the first message that has them
+        let nodePositions = null;
+        for (const msg of messages) {
+            if (msg.message && msg.message.metadata && msg.message.metadata.nodes && 
+                msg.message.metadata.nodes.length >= 2) {
+                const nodeIds = msg.message.metadata.nodes;
+                if (this.visualizer && window.neo4jIdMapping) {
+                    const originalId1 = nodeIds[0];
+                    const originalId2 = nodeIds[1];
+                    const graphId1 = window.neo4jIdMapping.originalToId[originalId1];
+                    const graphId2 = window.neo4jIdMapping.originalToId[originalId2];
+                    
+                    if (graphId1 && graphId2) {
+                        // Get the actual node objects
+                        const node1 = this.graphData.nodes.find(n => n.id == graphId1);
+                        const node2 = this.graphData.nodes.find(n => n.id == graphId2);
+                        
+                        if (node1 && node2) {
+                            nodePositions = [
+                                { x: node1.x || 0, y: node1.y || 0, z: node1.z || 0 },
+                                { x: node2.x || 0, y: node2.y || 0, z: node2.z || 0 }
+                            ];
+                            break; // Found nodes, stop looking
+                        }
+                    }
+                }
+            }
+        }
+        
         // 1. Fade out node popup
         if (this.popup) {
             this.popup.fadeOut();
         }
         
         // 2. Transition to Haiku mode with camera movement
-        this.transitionToHaikuMode(() => {
+        this.transitionToHaikuMode(nodePositions, () => {
             // This callback is called when camera transition completes
             
             // 3. Process runtime edges immediately after camera arrives
@@ -626,9 +655,10 @@ export class GraphBehaviorController {
     
     /**
      * Transition to Haiku mode with proper callback
+     * @param {Array|null} nodePositions - Array of two node positions for camera targeting
      * @param {Function} onComplete - Callback when transition completes
      */
-    transitionToHaikuMode(onComplete) {
+    transitionToHaikuMode(nodePositions, onComplete) {
         // Set camera mode to haiku but with special handling
         this.config.set('cameraMode', 'haiku');
         this.controls.setCameraMode('haiku');
@@ -639,8 +669,8 @@ export class GraphBehaviorController {
             this.visualizer.enableManualControls(false);
         }
         
-        // Start haiku mode with callback
-        this.visualizer.startHaikuModeWithCallback(onComplete);
+        // Start haiku mode with callback and node positions
+        this.visualizer.startHaikuModeWithCallback(nodePositions, onComplete);
         
         // Disable Node Popup immediately
         this.config.set('nodePopupEnabled', false);
