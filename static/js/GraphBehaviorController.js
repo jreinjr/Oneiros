@@ -359,27 +359,29 @@ export class GraphBehaviorController {
     handleNodeClick(node, event) {
         // Check if this is from camera animator (dreaming/haiku mode selection)
         const isFromCameraAnimator = event && event.fromCameraAnimator;
+        const orbitDuration = event && event.orbitDuration;
         
         // Only zoom camera in manual mode and for actual clicks (not animator selections)
         const cameraMode = this.config.get('cameraMode');
         const shouldZoom = cameraMode === 'manual' && !isFromCameraAnimator;
         
-        this.focusOnNode(node, shouldZoom);
+        this.focusOnNode(node, shouldZoom, orbitDuration);
     }
 
     /**
      * Focus on a specific node
      * @param {Object} node - Node to focus on
      * @param {boolean} zoomCamera - Whether to zoom camera to the node (default: true)
+     * @param {number} orbitDuration - Actual orbit duration for this node (optional)
      */
-    focusOnNode(node, zoomCamera = true) {
+    focusOnNode(node, zoomCamera = true, orbitDuration) {
         const previousNode = this.currentNode;
         this.currentNode = node;
         this.updateHighlights();
         
         // Show popup only if enabled
         if (this.config.get('nodePopupEnabled')) {
-            this.popup.show(node);
+            this.popup.show(node, orbitDuration);
         }
         
         // Animate camera to focus on the node only if requested

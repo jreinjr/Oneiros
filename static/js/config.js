@@ -50,8 +50,10 @@ export const DEFAULT_CONFIG = {
     cameraMode: 'manual',    // 'manual', 'dreaming', 'haiku'
     dreamOrbitRadius: 500,
     dreamOrbitDuration: 10,  // seconds per node
+    dreamOrbitDurationVariance: 0,  // variance in seconds (0-20)
     dreamOrbitSpeed: 0.05,   // radians per second
     dreamTransitionDuration: 3,  // seconds
+    popupDisplayDuration: 0.25,  // fraction of orbit duration to show popup (0.1-1.0)
     haikuOrbitRadius: 2000,
     haikuOrbitSpeed: 0.02,   // radians per second
     haikuTransitionDuration: 2,  // seconds to transition to center
@@ -152,8 +154,10 @@ export const CONFIG_LIMITS = {
     logPanelScale: { min: 75, max: 300, step: 25 },
     dreamOrbitRadius: { min: 200, max: 1000, step: 50 },
     dreamOrbitDuration: { min: 5, max: 30, step: 1 },
+    dreamOrbitDurationVariance: { min: 0, max: 20, step: 1 },
     dreamOrbitSpeed: { min: 0.01, max: 0.2, step: 0.01 },
     dreamTransitionDuration: { min: 1, max: 10, step: 0.5 },
+    popupDisplayDuration: { min: 0.1, max: 1.0, step: 0.05 },
     haikuOrbitRadius: { min: 1000, max: 10000, step: 100 },
     haikuOrbitSpeed: { min: 0.005, max: 0.1, step: 0.005 },
     popupOffsetX: { min: -200, max: 200, step: 10 },

@@ -77,10 +77,10 @@ export class GraphVisualizer {
         if (this.graph) {
             // Pass node selection handler to camera animator (for dreaming mode)
             // This should NOT zoom the camera, only select the node
-            this.cameraAnimator = new CameraAnimator(this.graph, this.config, (node) => {
+            this.cameraAnimator = new CameraAnimator(this.graph, this.config, (node, orbitDuration) => {
                 if (this.onNodeClick) {
                     // Pass a special event to indicate this is from camera animator
-                    this.onNodeClick(node, { fromCameraAnimator: true });
+                    this.onNodeClick(node, { fromCameraAnimator: true, orbitDuration: orbitDuration });
                 }
             });
         }

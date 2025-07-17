@@ -24,6 +24,7 @@ export class CameraAnimator {
         this.currentNodeIndex = -1;
         this.currentNode = null;
         this.lastTime = performance.now();
+        this.currentOrbitDuration = 0; // Actual duration for current node
         
         this.setupCameraRig();
     }
@@ -112,7 +113,7 @@ export class CameraAnimator {
         // Handle dream mode node transitions
         if (this.isDreaming) {
             this.nodeTimer += deltaTime;
-            if (this.nodeTimer >= this.config.get('dreamOrbitDuration')) {
+            if (this.nodeTimer >= this.currentOrbitDuration) {
                 this.selectNewNode();
                 this.nodeTimer = 0;
             }
@@ -166,9 +167,14 @@ export class CameraAnimator {
         const node = nodes[newIndex];
         this.currentNode = node;
         
-        // Trigger node selection callback (same as clicking)
+        // Calculate orbit duration with variance
+        const baseDuration = this.config.get('dreamOrbitDuration');
+        const variance = this.config.get('dreamOrbitDurationVariance');
+        this.currentOrbitDuration = baseDuration + (Math.random() * variance);
+        
+        // Trigger node selection callback with actual orbit duration
         if (this.onNodeSelect && node) {
-            this.onNodeSelect(node);
+            this.onNodeSelect(node, this.currentOrbitDuration);
         }
         
         // Animate to new node position

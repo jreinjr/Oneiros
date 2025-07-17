@@ -87,8 +87,9 @@ export class PopupManager {
     /**
      * Show popup for a node
      * @param {Object} node - Node to show popup for
+     * @param {number} orbitDuration - Actual orbit duration for this node (optional)
      */
-    show(node) {
+    show(node, orbitDuration) {
         if (!node || !this.popup) return;
         
         this.currentNode = node;
@@ -145,10 +146,13 @@ export class PopupManager {
         
         // Get timing from config
         const dreamTransitionDuration = this.config ? this.config.get('dreamTransitionDuration') : 3;
-        const dreamOrbitDuration = this.config ? this.config.get('dreamOrbitDuration') : 10;
         const cameraMode = this.config ? this.config.get('cameraMode') : 'manual';
+        const popupDisplayDuration = this.config ? this.config.get('popupDisplayDuration') : 0.25;
         
-        const showDelay = (dreamTransitionDuration * 1000) / 2; // Convert to milliseconds and divide by 2
+        // Use provided orbit duration or fall back to config
+        const actualOrbitDuration = orbitDuration || (this.config ? this.config.get('dreamOrbitDuration') : 10);
+        
+        const showDelay = dreamTransitionDuration * 1000; // Show after transition completes
         
         // Show popup after delay
         this.showTimeout = setTimeout(() => {
@@ -158,21 +162,18 @@ export class PopupManager {
             }
             this.showTimeout = null;
             
-            // In dream mode, schedule fade-out before next transition
+            // In dream mode, hide popup after configured fraction of orbit time
             if (cameraMode === 'dreaming') {
-                // Calculate when to start fading out (subtract fade duration from orbit duration)
-                const fadeOutDuration = 300; // Match CSS transition duration (0.3s)
-                const hideDelay = (dreamOrbitDuration * 1000) - fadeOutDuration - showDelay;
+                // Calculate how long to show the popup
+                const popupVisibleTime = actualOrbitDuration * popupDisplayDuration * 1000; // Convert to ms
                 
-                if (hideDelay > 0) {
-                    this.hideTimeout = setTimeout(() => {
-                        this.wrapper.classList.remove('visible');
-                        if (this.connectionLine) {
-                            this.connectionLine.classList.remove('visible');
-                        }
-                        this.hideTimeout = null;
-                    }, hideDelay);
-                }
+                this.hideTimeout = setTimeout(() => {
+                    this.wrapper.classList.remove('visible');
+                    if (this.connectionLine) {
+                        this.connectionLine.classList.remove('visible');
+                    }
+                    this.hideTimeout = null;
+                }, popupVisibleTime);
             }
         }, showDelay);
         

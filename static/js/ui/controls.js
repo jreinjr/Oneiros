@@ -66,8 +66,8 @@ export class ControlsManager {
             'nodeCount', 'connectionDensity',
             'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps',
             'messageDuration', 'typingSpeed', 'logPanelScale', 'overlayOpacity',
-            'dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitSpeed',
-            'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed',
+            'dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitDurationVariance', 'dreamOrbitSpeed',
+            'dreamTransitionDuration', 'popupDisplayDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed',
             'haikuTransitionDuration', 'popupOffsetX', 'popupOffsetY', 'cameraTargetX', 'cameraTargetY',
             'defaultEdgeWeight', 'runtimeEdgeWeight', 'incrementalEdgeWeight'
         ];
@@ -86,7 +86,12 @@ export class ControlsManager {
             // Set initial value
             const currentValue = this.config.get(id);
             slider.value = currentValue;
-            valueDisplay.textContent = currentValue;
+            // Special formatting for popupDisplayDuration
+            if (id === 'popupDisplayDuration') {
+                valueDisplay.textContent = currentValue + 'x';
+            } else {
+                valueDisplay.textContent = currentValue;
+            }
             
             // Initialize log panel scale if this is the logPanelScale slider
             if (id === 'logPanelScale') {
@@ -101,7 +106,12 @@ export class ControlsManager {
             // Add event listener
             slider.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value);
-                valueDisplay.textContent = value;
+                // Special formatting for popupDisplayDuration
+                if (id === 'popupDisplayDuration') {
+                    valueDisplay.textContent = value + 'x';
+                } else {
+                    valueDisplay.textContent = value;
+                }
                 this.config.set(id, value);
                 
                 // Handle log panel scaling
