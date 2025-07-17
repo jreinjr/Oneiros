@@ -898,30 +898,8 @@ export class GraphBehaviorController {
                     break;
             }
             
-            // Check for metadata containing node IDs for runtime edges
-            if (message.metadata && message.metadata.nodes && message.metadata.nodes.length >= 2) {
-                const nodeIds = message.metadata.nodes;
-                if (this.visualizer && window.neo4jIdMapping) {
-                    // Convert original_ids to graph node IDs using the global mapping
-                    const originalId1 = nodeIds[0];
-                    const originalId2 = nodeIds[1];
-                    
-                    // Look up the actual graph node IDs from the mapping
-                    const graphId1 = window.neo4jIdMapping.originalToId[originalId1];
-                    const graphId2 = window.neo4jIdMapping.originalToId[originalId2];
-                    
-                    if (graphId1 && graphId2) {
-                        // Create runtime edge between the two quotes using graph node IDs
-                        this.visualizer.addRuntimeEdge(graphId1, graphId2);
-                        console.log(`Added runtime edge between nodes ${graphId1} and ${graphId2} (original IDs: ${originalId1}, ${originalId2})`);
-                    } else {
-                        console.warn(`Could not find graph node IDs for original IDs: ${originalId1}, ${originalId2}`);
-                        console.warn(`Mapping available: ${!!window.neo4jIdMapping.originalToId[originalId1]}, ${!!window.neo4jIdMapping.originalToId[originalId2]}`);
-                    }
-                } else if (!window.neo4jIdMapping) {
-                    console.warn('Neo4j ID mapping not available');
-                }
-            }
+            // Skip runtime edge creation here - it's already handled in handleAPIMessageTransition
+            // This prevents duplicate edge creation between the same nodes
             
             // Use the logger's quote entry method if we have an author
             if (author) {

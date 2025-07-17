@@ -26,9 +26,9 @@
   "haikuOrbitRadius": 3100,
   "haikuOrbitSpeed": 0.02,
   "haikuTransitionDuration": 2,
-  "haikuDistanceMultiplier": 1,
+  "haikuDistanceMultiplier": 2,
   "cameraTargetX": 50,
   "cameraTargetY": 50,
   "currentTheme": "beauty",
-  "timestamp": "2025-07-17T14:25:37.530Z"
+  "timestamp": "2025-07-17T14:35:11.772Z"
 }
