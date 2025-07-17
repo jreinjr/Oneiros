@@ -3,7 +3,7 @@
   "colors": {
     "defaultLink": "#666",
     "defaultNode": "#F44336",
-    "graphBackground": "#000000",
+    "graphBackground": "#3e0007",
     "highlightedLink": "rgba(255, 255, 255, 0.8)",
     "highlightedNode": "rgba(255, 255, 255, 0.8)",
     "logBackground": "rgba(0, 0, 0, 0.8)",
