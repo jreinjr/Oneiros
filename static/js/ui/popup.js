@@ -99,7 +99,10 @@ export class PopupManager {
                 // Create author text with birth location if available
                 let titleContent = node.author;
                 if (node.author_birth_location) {
-                    titleContent = `${node.author} <span class="popup-birth-location">- ${node.author_birth_location}</span>`;
+                    // Extract country (last element) from comma-separated location
+                    const locationParts = node.author_birth_location.split(',');
+                    const country = locationParts[locationParts.length - 1].trim();
+                    titleContent = `${node.author} <span class="popup-birth-location">- ${country}</span>`;
                 }
                 this.popupTitle.innerHTML = titleContent;
             } else {

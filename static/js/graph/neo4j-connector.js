@@ -110,6 +110,7 @@ export async function fetchBeliefGraph(tagFilter = null) {
                 original_id: originalId, // Store original_id as a property
                 quote: quote.properties.text || quote.properties.quote || 'No text available',
                 author: quote.properties.author_name || quote.properties.author || 'Unknown',
+                author_birth_location: quote.properties.author_birth_location || '',
                 tags: quote.properties.tags || [],
                 // Add connections set for compatibility with existing code
                 connections: new Set()

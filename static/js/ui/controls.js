@@ -192,7 +192,7 @@ export class ControlsManager {
             'selectedNodeColor', 'highlightedNodeColor', 'defaultNodeColor',
             'highlightedLinkColor', 'defaultLinkColor', 'graphBackgroundColor',
             'popupPrimaryColor', 'popupSecondaryColor', 'popupBackgroundColor',
-            'logPrimaryColor', 'logSecondaryColor', 'logBackgroundColor'
+            'popupBirthLocationColor', 'logPrimaryColor', 'logSecondaryColor', 'logBackgroundColor'
         ];
 
         colorInputs.forEach(inputId => {
@@ -236,6 +236,7 @@ export class ControlsManager {
             'popupPrimaryColor': 'popupPrimary',
             'popupSecondaryColor': 'popupSecondary',
             'popupBackgroundColor': 'popupBackground',
+            'popupBirthLocationColor': 'popupBirthLocation',
             'logPrimaryColor': 'logPrimary',
             'logSecondaryColor': 'logSecondary',
             'logBackgroundColor': 'logBackground'
@@ -318,7 +319,7 @@ export class ControlsManager {
             'selectedNodeColor', 'highlightedNodeColor', 'defaultNodeColor',
             'highlightedLinkColor', 'defaultLinkColor', 'graphBackgroundColor',
             'popupPrimaryColor', 'popupSecondaryColor', 'popupBackgroundColor',
-            'logPrimaryColor', 'logSecondaryColor', 'logBackgroundColor'
+            'popupBirthLocationColor', 'logPrimaryColor', 'logSecondaryColor', 'logBackgroundColor'
         ];
 
         colorInputs.forEach(inputId => {
