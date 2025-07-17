@@ -3,9 +3,14 @@
 Test script to verify the ID mapping is working correctly
 """
 
+import os
 import asyncio
 from neo4j import GraphDatabase
 import json
+
+# Set the cache directory for offline sentence-transformers models
+MODEL_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models_cache')
+os.environ['SENTENCE_TRANSFORMERS_HOME'] = MODEL_CACHE_DIR
 
 async def test_id_mapping():
     # Neo4j connection
