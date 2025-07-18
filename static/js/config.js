@@ -45,6 +45,7 @@ export const DEFAULT_CONFIG = {
     // Feature Toggles
     poetryLogEnabled: true,
     nodePopupEnabled: true,
+    popupScale: 100,  // percentage (50-200)
     
     // Camera Mode Settings
     cameraMode: 'manual',    // 'manual', 'dreaming', 'haiku'
@@ -58,10 +59,6 @@ export const DEFAULT_CONFIG = {
     haikuOrbitSpeed: 0.02,   // radians per second
     haikuTransitionDuration: 2,  // seconds to transition to center
     haikuDistanceMultiplier: 10,  // multiplier for distance-based orbit radius
-    
-    // Popup Position Settings
-    popupOffsetX: 50,        // pixels from node center
-    popupOffsetY: -50,       // pixels from node center (negative = up)
     
     // Camera Target Screen Position (percentage of screen)
     cameraTargetX: 50,       // 0-100% of screen width
@@ -153,6 +150,7 @@ export const CONFIG_LIMITS = {
     cameraDistance: { min: 20, max: 200, step: 10 },
     cameraAnimationDuration: { min: 500, max: 5000, step: 500 },
     logPanelScale: { min: 75, max: 300, step: 25 },
+    popupScale: { min: 50, max: 200, step: 10 },
     dreamOrbitRadius: { min: 200, max: 1000, step: 50 },
     dreamOrbitDuration: { min: 5, max: 30, step: 1 },
     dreamOrbitDurationVariance: { min: 0, max: 20, step: 1 },
@@ -162,8 +160,6 @@ export const CONFIG_LIMITS = {
     haikuOrbitRadius: { min: 1000, max: 10000, step: 100 },
     haikuOrbitSpeed: { min: 0.005, max: 0.1, step: 0.005 },
     haikuDistanceMultiplier: { min: 1, max: 50, step: 1 },
-    popupOffsetX: { min: -200, max: 200, step: 10 },
-    popupOffsetY: { min: -200, max: 200, step: 10 },
     cameraTargetX: { min: 0, max: 100, step: 5 },
     cameraTargetY: { min: 0, max: 100, step: 5 },
     defaultEdgeWeight: { min: 0.5, max: 10, step: 0.5 },
@@ -387,8 +383,7 @@ export class ConfigManager {
                 // Logger Settings
                 poetryLogEnabled: this.get('poetryLogEnabled'),
                 nodePopupEnabled: this.get('nodePopupEnabled'),
-                popupOffsetX: this.get('popupOffsetX'),
-                popupOffsetY: this.get('popupOffsetY'),
+                popupScale: this.get('popupScale'),
                 logPanelScale: this.get('logPanelScale'),
                 messageDuration: this.get('messageDuration'),
                 typingSpeed: this.get('typingSpeed'),
@@ -512,8 +507,7 @@ export class ConfigManager {
             // Logger Settings
             poetryLogEnabled: this.get('poetryLogEnabled'),
             nodePopupEnabled: this.get('nodePopupEnabled'),
-            popupOffsetX: this.get('popupOffsetX'),
-            popupOffsetY: this.get('popupOffsetY'),
+            popupScale: this.get('popupScale'),
             logPanelScale: this.get('logPanelScale'),
             messageDuration: this.get('messageDuration'),
             typingSpeed: this.get('typingSpeed'),

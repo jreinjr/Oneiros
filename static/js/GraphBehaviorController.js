@@ -259,13 +259,11 @@ export class GraphBehaviorController {
             });
         });
         
-        // Popup offset callbacks
-        ['popupOffsetX', 'popupOffsetY'].forEach(param => {
-            this.controls.setCallback(param, (controlId, value) => {
-                if (this.popup) {
-                    this.popup.updatePosition();
-                }
-            });
+        // Popup scale callback
+        this.controls.setCallback('popupScale', (controlId, value) => {
+            if (this.popup) {
+                this.popup.updateScale(value);
+            }
         });
         
         // Camera target position callbacks

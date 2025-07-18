@@ -146,6 +146,60 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* Radial countdown timer */
+        .countdown-timer {
+            width: 50px;
+            height: 50px;
+            position: relative;
+            display: none;
+        }
+        
+        .countdown-timer.show {
+            display: block;
+        }
+        
+        .spinner.hide {
+            display: none;
+        }
+        
+        .countdown-timer svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+            display: block;
+        }
+        
+        .countdown-timer circle {
+            fill: none;
+            stroke-width: 3;
+        }
+        
+        .countdown-timer .background {
+            stroke: rgba(255, 255, 255, 0.2);
+        }
+        
+        .countdown-timer .progress {
+            stroke: white;
+            stroke-dasharray: 151; /* 2 * PI * 24 (radius) */
+            stroke-dashoffset: 0;
+            stroke-linecap: round;
+            transform-origin: center;
+            transition: none;
+        }
+        
+        @keyframes countdown {
+            from {
+                stroke-dashoffset: 0;
+            }
+            to {
+                stroke-dashoffset: 151;
+            }
+        }
+        
+        .countdown-timer.active .progress {
+            animation: countdown 5s linear forwards;
+        }
+        
         .listening-text {
             font-size: 1.2em;
             color: rgba(255, 255, 255, 0.9);
@@ -225,7 +279,13 @@
     <h1 id="question">{{ question }}</h1>
     
     <div class="listening-indicator" id="listeningIndicator">
-        <div class="spinner"></div>
+        <div class="spinner" id="spinner"></div>
+        <div class="countdown-timer" id="countdownTimer">
+            <svg viewBox="0 0 56 56">
+                <circle class="background" cx="28" cy="28" r="24"></circle>
+                <circle class="progress" cx="28" cy="28" r="24"></circle>
+            </svg>
+        </div>
         <div class="listening-text">Listening...</div>
     </div>
     
@@ -246,6 +306,40 @@
         let lastTranscriptTime = Date.now();
         let restartCount = 0;
         const MAX_RESTARTS = 5;
+        let isShowingCountdown = false;
+        
+        function showSpinner() {
+            isShowingCountdown = false;
+            document.getElementById('spinner').classList.remove('hide');
+            document.getElementById('countdownTimer').classList.remove('show', 'active');
+        }
+        
+        function showCountdown() {
+            isShowingCountdown = true;
+            document.getElementById('spinner').classList.add('hide');
+            document.getElementById('countdownTimer').classList.add('show');
+            // Trigger the countdown animation after a brief delay
+            setTimeout(() => {
+                document.getElementById('countdownTimer').classList.add('active');
+            }, 50);
+        }
+        
+        function resetCountdown() {
+            const countdownTimer = document.getElementById('countdownTimer');
+            const progress = document.querySelector('.countdown-timer .progress');
+            
+            // Remove active class to stop animation
+            countdownTimer.classList.remove('active');
+            
+            // Reset the animation
+            progress.style.animation = 'none';
+            
+            // Force a reflow
+            void progress.offsetWidth;
+            
+            // Clear inline styles
+            progress.style.animation = '';
+        }
         
         // Initialize speech recognition if available
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -268,6 +362,11 @@
                 if (restartCount === 0) {
                     // Only clear fullUtterance on initial start, not on restarts
                     fullUtterance = '';
+                    showSpinner(); // Show spinner on initial start
+                } else {
+                    // Show countdown after first restart
+                    resetCountdown();
+                    showCountdown();
                 }
                 lastTranscriptTime = Date.now();
                 document.getElementById('listeningIndicator').classList.add('show');
@@ -321,6 +420,11 @@
                 // Get the latest result and replace currentUtterance with it
                 const latestResult = event.results[event.results.length - 1];
                 currentUtterance = latestResult[0].transcript;
+                
+                // If we're showing countdown and detect voice, switch back to spinner
+                if (isShowingCountdown && currentUtterance.trim().length > 0) {
+                    showSpinner();
+                }
                 
                 // Display fullUtterance + currentUtterance
                 const input = document.getElementById('messageInput');

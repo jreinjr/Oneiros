@@ -65,10 +65,10 @@ export class ControlsManager {
         const sliders = [
             'nodeCount', 'connectionDensity',
             'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps',
-            'messageDuration', 'typingSpeed', 'logPanelScale', 'overlayOpacity',
+            'messageDuration', 'typingSpeed', 'popupScale', 'logPanelScale', 'overlayOpacity',
             'dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitDurationVariance', 'dreamOrbitSpeed',
             'dreamTransitionDuration', 'popupDisplayDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed',
-            'haikuTransitionDuration', 'haikuDistanceMultiplier', 'popupOffsetX', 'popupOffsetY', 'cameraTargetX', 'cameraTargetY',
+            'haikuTransitionDuration', 'haikuDistanceMultiplier', 'cameraTargetX', 'cameraTargetY',
             'defaultEdgeWeight', 'runtimeEdgeWeight', 'incrementalEdgeWeight'
         ];
 
@@ -98,6 +98,11 @@ export class ControlsManager {
                 this.updateLogPanelScale(currentValue);
             }
             
+            // Initialize popup scale if this is the popupScale slider
+            if (id === 'popupScale') {
+                this.updatePopupScale(currentValue);
+            }
+            
             // Initialize overlay opacity if this is the overlayOpacity slider
             if (id === 'overlayOpacity') {
                 this.updateOverlayOpacity(currentValue);
@@ -117,6 +122,11 @@ export class ControlsManager {
                 // Handle log panel scaling
                 if (id === 'logPanelScale') {
                     this.updateLogPanelScale(value);
+                }
+                
+                // Handle popup scaling
+                if (id === 'popupScale') {
+                    this.updatePopupScale(value);
                 }
                 
                 // Handle overlay opacity
@@ -352,10 +362,10 @@ export class ControlsManager {
         const sliders = [
             'nodeCount', 'connectionDensity',
             'nodeSize', 'nodeDistance', 'connectionThickness', 'highlightSteps',
-            'messageDuration', 'typingSpeed', 'logPanelScale', 'overlayOpacity',
+            'messageDuration', 'typingSpeed', 'popupScale', 'logPanelScale', 'overlayOpacity',
             'dreamOrbitRadius', 'dreamOrbitDuration', 'dreamOrbitSpeed',
             'dreamTransitionDuration', 'haikuOrbitRadius', 'haikuOrbitSpeed',
-            'haikuTransitionDuration', 'popupOffsetX', 'popupOffsetY', 'cameraTargetX', 'cameraTargetY',
+            'haikuTransitionDuration', 'cameraTargetX', 'cameraTargetY',
             'defaultEdgeWeight', 'runtimeEdgeWeight', 'incrementalEdgeWeight'
         ];
 
@@ -370,6 +380,8 @@ export class ControlsManager {
                     // Handle special cases
                     if (id === 'logPanelScale') {
                         this.updateLogPanelScale(value);
+                    } else if (id === 'popupScale') {
+                        this.updatePopupScale(value);
                     } else if (id === 'overlayOpacity') {
                         this.updateOverlayOpacity(value);
                     }
@@ -812,6 +824,22 @@ export class ControlsManager {
         // The CSS already has translate(-50%, -50%) for centering, so we need to preserve it
         logPanel.style.transformOrigin = 'center center';
         logPanel.style.transform = `translate(-50%, -50%) scale(${scaleFactor})`;
+    }
+
+    /**
+     * Update popup scale
+     * @param {number} scale - Scale percentage (50-200)
+     */
+    updatePopupScale(scale) {
+        const popupWrapper = document.getElementById('node-popup-wrapper');
+        if (!popupWrapper) return;
+        
+        // Convert percentage to scale factor
+        const scaleFactor = scale / 100;
+        
+        // Apply transform to the wrapper which includes the popup and quotation marks
+        popupWrapper.style.transform = `scale(${scaleFactor})`;
+        popupWrapper.style.transformOrigin = 'left top';
     }
 
     /**

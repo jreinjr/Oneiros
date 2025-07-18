@@ -43,6 +43,9 @@ export class PopupManager {
         
         this.setupDragging();
         this.setupEventListeners();
+        
+        // Apply initial scale
+        this.applyScale();
     }
 
     /**
@@ -129,9 +132,9 @@ export class PopupManager {
         // Apply colors from config
         this.applyPopupColors();
         
-        // Position popup near the node if not already positioned
+        // Position popup in center of screen if not already positioned
         if (this.position.x === 0 && this.position.y === 0) {
-            this.positionNearNode(node);
+            this.centerOnScreen();
         }
         
         // Clear any existing timeouts
@@ -239,6 +242,25 @@ export class PopupManager {
     }
 
     /**
+     * Center popup on screen
+     */
+    centerOnScreen() {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        // Get popup dimensions
+        const popupRect = this.popup.getBoundingClientRect();
+        const popupWidth = popupRect.width || 300; // fallback width
+        const popupHeight = popupRect.height || 200; // fallback height
+        
+        // Calculate center position
+        const centerX = (windowWidth - popupWidth) / 2;
+        const centerY = (windowHeight - popupHeight) / 2;
+        
+        this.setPosition(centerX, centerY);
+    }
+
+    /**
      * Position popup near a node
      * @param {Object} node - Node to position near
      */
@@ -252,9 +274,9 @@ export class PopupManager {
             node.z || 0
         );
         
-        // Get configurable offsets
-        const offsetX = this.visualizer.config.get('popupOffsetX') || 50;
-        const offsetY = this.visualizer.config.get('popupOffsetY') || -50;
+        // Use fixed offsets
+        const offsetX = 50;
+        const offsetY = -50;
         
         this.setPosition(
             nodeScreenPos.x + offsetX,
@@ -541,6 +563,31 @@ export class PopupManager {
     updatePosition() {
         if (this.isVisible() && this.currentNode) {
             this.positionNearNode(this.currentNode);
+        }
+    }
+    
+    /**
+     * Update popup scale
+     * @param {number} scale - Scale percentage (50-200)
+     */
+    updateScale(scale) {
+        if (!this.wrapper) return;
+        
+        // Convert percentage to scale factor
+        const scaleFactor = scale / 100;
+        
+        // Apply transform to the wrapper which includes the popup and quotation marks
+        this.wrapper.style.transform = `scale(${scaleFactor})`;
+        this.wrapper.style.transformOrigin = 'left top';
+    }
+    
+    /**
+     * Apply current scale from config
+     */
+    applyScale() {
+        if (this.config) {
+            const scale = this.config.get('popupScale') || 100;
+            this.updateScale(scale);
         }
     }
     
