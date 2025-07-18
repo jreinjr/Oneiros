@@ -11,6 +11,8 @@ import threading
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
+import csv
+import random
 
 # Set the cache directory for offline sentence-transformers models
 MODEL_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models_cache')
@@ -140,7 +142,23 @@ def graph_visualization():
 @app.route('/webphone')
 def webphone():
     """Web phone interface - simple input to /listen endpoint"""
-    return render_template('pages/webphone.html')
+    # Read questions from CSV
+    questions_file = os.path.join(app.root_path, 'data', 'questions.csv')
+    question = "What is the nature of reality?"  # Default question
+    
+    try:
+        with open(questions_file, 'r') as f:
+            reader = csv.DictReader(f)
+            questions = list(reader)
+            if questions:
+                # Select a random question from the current theme column
+                theme_questions = [q[current_theme] for q in questions if current_theme in q and q[current_theme]]
+                if theme_questions:
+                    question = random.choice(theme_questions)
+    except Exception as e:
+        app.logger.warning(f"Could not read questions.csv: {e}")
+    
+    return render_template('pages/webphone.html', theme=current_theme, question=question)
 
 @app.route('/api/neo4j-config')
 def neo4j_config():

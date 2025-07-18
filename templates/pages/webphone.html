@@ -8,126 +8,235 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #4CAF50;
+            background-color: #000000; /* Start with black */
             font-family: Arial, sans-serif;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            transition: background-color 2s ease-in-out;
+            color: white;
         }
         
-        .container {
-            text-align: center;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 90%;
+        body.theme-transition {
+            {% if theme == 'beauty' %}
+            background-color: #4CAF50; /* Green for Beauty */
+            {% elif theme == 'truth' %}
+            background-color: #2196F3; /* Blue for Truth */
+            {% elif theme == 'love' %}
+            background-color: #F44336; /* Red for Love */
+            {% else %}
+            background-color: #4CAF50; /* Default to green */
+            {% endif %}
+        }
+        
+        body.fade-to-black {
+            background-color: #000000 !important;
         }
         
         h1 {
-            color: #333;
+            color: white;
             margin-bottom: 30px;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            font-size: 2.5em;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        h1.show {
+            opacity: 1;
+        }
+        
+        .input-container {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .input-container.show {
+            opacity: 1;
         }
         
         .input-group {
             display: flex;
             gap: 10px;
-            margin-top: 20px;
+            width: 100%;
         }
         
         input[type="text"] {
             flex: 1;
             padding: 12px;
             font-size: 16px;
-            border: 2px solid #4CAF50;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 5px;
             outline: none;
         }
         
         input[type="text"]:focus {
-            border-color: #45a049;
+            border-color: rgba(255, 255, 255, 0.6);
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.6);
         }
         
         button {
             padding: 12px 24px;
             font-size: 16px;
-            background-color: #4CAF50;
+            background-color: rgba(255, 255, 255, 0.2);
             color: white;
-            border: none;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
         }
         
         button:hover {
-            background-color: #45a049;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
         }
         
         button:disabled {
-            background-color: #cccccc;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
             cursor: not-allowed;
+            opacity: 0.5;
         }
         
-        .mic-button {
-            background-color: #f44336;
-            margin-left: 10px;
+        .submit-button {
+            width: 100%;
+            max-width: 200px;
+            margin-top: 10px;
         }
         
-        .mic-button:hover {
-            background-color: #da190b;
+        /* Listening spinner */
+        .listening-indicator {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
         }
         
-        .mic-button.recording {
-            background-color: #ff5722;
-            animation: pulse 1.5s infinite;
+        .listening-indicator.show {
+            display: flex;
         }
         
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
         
-        .mic-icon {
-            font-size: 20px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .listening-text {
+            font-size: 1.2em;
+            color: rgba(255, 255, 255, 0.9);
         }
         
         #response {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f0f0f0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: transparent;
             border-radius: 5px;
-            display: none;
-            text-align: left;
+            display: block;
+            text-align: center;
+            font-size: 1.8em;
+            line-height: 1.8;
+            width: 90vw;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            visibility: hidden;
+            white-space: nowrap;
+        }
+        
+        #response .success {
+            display: inline-block;
+            white-space: pre-line;
+        }
+        
+        #response .success > div {
+            white-space: nowrap;
+            overflow: hidden;
         }
         
         #response.show {
-            display: block;
+            opacity: 1;
+            visibility: visible;
         }
         
         .error {
-            color: #d32f2f;
+            color: #ffcdd2;
         }
         
         .success {
-            color: #388e3c;
+            {% if theme == 'beauty' %}
+            color: #4CAF50; /* Green for Beauty */
+            {% elif theme == 'truth' %}
+            color: #2196F3; /* Blue for Truth */
+            {% elif theme == 'love' %}
+            color: #F44336; /* Red for Love */
+            {% else %}
+            color: #4CAF50; /* Default to green */
+            {% endif %}
+            font-weight: 500;
+            text-shadow: 0 0 20px currentColor;
+        }
+        
+        /* Hide elements initially */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Fade out class */
+        .fade-out {
+            opacity: 0 !important;
+            transition: opacity 1s ease-in-out;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Hello World</h1>
-        <div class="input-group">
-            <input type="text" id="messageInput" placeholder="Enter your message" autofocus>
-            <button id="sendButton" onclick="sendMessage()">Enter</button>
-            <button id="micButton" class="mic-button" onclick="toggleSpeechRecognition()" title="Use microphone">
-                <span class="mic-icon">🎤</span>
-            </button>
-        </div>
-        <div id="response"></div>
+    <!-- Auto-play audio -->
+    <audio id="zenAudio" autoplay loop>
+        <source src="{{ url_for('static', filename='audio/zen.mp3') }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    
+    <h1 id="question">{{ question }}</h1>
+    
+    <div class="listening-indicator" id="listeningIndicator">
+        <div class="spinner"></div>
+        <div class="listening-text">Listening...</div>
     </div>
+    
+    <div class="input-container" id="inputContainer">
+        <div class="input-group">
+            <input type="text" id="messageInput" placeholder="Share your thoughts..." autofocus>
+        </div>
+        <button class="submit-button" id="submitButton" onclick="sendMessage()">Submit</button>
+    </div>
+    
+    <div id="response"></div>
 
     <script>
         // Speech recognition variables
@@ -144,16 +253,16 @@
             
             recognition.onstart = function() {
                 isRecording = true;
-                const micButton = document.getElementById('micButton');
-                micButton.classList.add('recording');
-                document.getElementById('messageInput').placeholder = 'Listening...';
+                document.getElementById('listeningIndicator').classList.add('show');
+                document.getElementById('inputContainer').classList.add('hidden');
             };
             
             recognition.onend = function() {
                 isRecording = false;
-                const micButton = document.getElementById('micButton');
-                micButton.classList.remove('recording');
-                document.getElementById('messageInput').placeholder = 'Enter your message';
+                document.getElementById('listeningIndicator').classList.remove('show');
+                document.getElementById('inputContainer').classList.remove('hidden');
+                document.getElementById('inputContainer').classList.add('show');
+                document.getElementById('messageInput').focus();
             };
             
             recognition.onresult = function(event) {
@@ -172,6 +281,8 @@
                 const input = document.getElementById('messageInput');
                 if (finalTranscript) {
                     input.value = finalTranscript;
+                    // Stop recording after getting final transcript
+                    stopRecording();
                 } else {
                     input.value = interimTranscript;
                 }
@@ -179,36 +290,23 @@
             
             recognition.onerror = function(event) {
                 console.error('Speech recognition error:', event.error);
-                if (event.error === 'not-allowed') {
-                    alert('Microphone access denied. Please allow microphone access to use this feature.');
-                } else {
-                    alert('Speech recognition error: ' + event.error);
-                }
                 stopRecording();
+                // Show input field on error
+                document.getElementById('inputContainer').classList.remove('hidden');
+                document.getElementById('inputContainer').classList.add('show');
             };
-        } else {
-            // Hide mic button if speech recognition not supported
-            document.getElementById('micButton').style.display = 'none';
-        }
-        
-        function toggleSpeechRecognition() {
-            if (!recognition) {
-                alert('Speech recognition is not supported in your browser.');
-                return;
-            }
-            
-            if (isRecording) {
-                stopRecording();
-            } else {
-                startRecording();
-            }
         }
         
         function startRecording() {
             try {
-                recognition.start();
+                if (recognition) {
+                    recognition.start();
+                }
             } catch (e) {
                 console.error('Failed to start recognition:', e);
+                // Show input field if mic fails
+                document.getElementById('inputContainer').classList.remove('hidden');
+                document.getElementById('inputContainer').classList.add('show');
             }
         }
         
@@ -218,6 +316,27 @@
             }
         }
         
+        // Animation sequence on page load
+        window.addEventListener('load', function() {
+            // Start background color transition immediately
+            document.body.classList.add('theme-transition');
+            
+            // Show question after 3 seconds (2s fade + 1s delay)
+            setTimeout(() => {
+                document.getElementById('question').classList.add('show');
+            }, 3000);
+            
+            // Try to activate microphone after 5 seconds (2s + 1s + 2s + 1s)
+            setTimeout(() => {
+                if (recognition) {
+                    startRecording();
+                } else {
+                    // No speech recognition, show input field
+                    document.getElementById('inputContainer').classList.add('show');
+                }
+            }, 5000);
+        });
+        
         // Allow Enter key to submit
         document.getElementById('messageInput').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
@@ -226,11 +345,8 @@
         });
 
         async function sendMessage() {
-            // Stop recording if active
-            stopRecording();
-            
             const input = document.getElementById('messageInput');
-            const button = document.getElementById('sendButton');
+            const button = document.getElementById('submitButton');
             const responseDiv = document.getElementById('response');
             const message = input.value.trim();
             
@@ -242,6 +358,17 @@
             button.disabled = true;
             input.disabled = true;
             responseDiv.classList.remove('show');
+            
+            // Fade out UI elements
+            document.getElementById('question').classList.add('fade-out');
+            document.getElementById('inputContainer').classList.add('fade-out');
+            document.getElementById('listeningIndicator').classList.add('fade-out');
+            
+            // Start fading background to black after UI fades
+            setTimeout(() => {
+                document.body.classList.remove('theme-transition');
+                document.body.classList.add('fade-to-black');
+            }, 1000);
             
             try {
                 const response = await fetch('/listen', {
@@ -257,22 +384,65 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    responseDiv.innerHTML = `<div class="success"><strong>Response:</strong><br>${data.user_response.message}</div>`;
-                    responseDiv.classList.add('show');
+                    // Extract the haiku content from the nested response structure
+                    const haikuContent = data.user_response?.content || data.user_response?.message || 'No response generated';
+                    
+                    // Wait for background to be fully black before showing response
+                    setTimeout(() => {
+                        // Format haiku with line breaks preserved, wrapping each line in a div
+                        const lines = haikuContent.split('\n');
+                        const formattedHaiku = lines.map(line => `<div>${line}</div>`).join('');
+                        responseDiv.innerHTML = `<div class="success">${formattedHaiku}</div>`;
+                        
+                        // Adjust font size to fit screen width
+                        setTimeout(() => {
+                            const successDiv = responseDiv.querySelector('.success');
+                            let fontSize = 1.8; // Start with 1.8em
+                            responseDiv.style.fontSize = fontSize + 'em';
+                            
+                            // Check each line and shrink font if needed
+                            const lineDivs = successDiv.querySelectorAll('div');
+                            let needsResize = true;
+                            
+                            while (needsResize && fontSize > 0.5) {
+                                needsResize = false;
+                                for (const lineDiv of lineDivs) {
+                                    if (lineDiv.scrollWidth > responseDiv.clientWidth - 40) { // 40px for padding
+                                        needsResize = true;
+                                        fontSize -= 0.1;
+                                        responseDiv.style.fontSize = fontSize + 'em';
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Now fade in
+                            responseDiv.classList.add('show');
+                        }, 50);
+                    }, 2000); // Wait for fade to black to complete
+                    
                     // Clear input on success
                     input.value = '';
                 } else {
-                    responseDiv.innerHTML = `<div class="error"><strong>Error:</strong> ${data.error || 'Unknown error occurred'}</div>`;
-                    responseDiv.classList.add('show');
+                    setTimeout(() => {
+                        responseDiv.innerHTML = `<div class="error">Error: ${data.error || 'Unknown error occurred'}</div>`;
+                        setTimeout(() => {
+                            responseDiv.classList.add('show');
+                        }, 100);
+                    }, 2000);
                 }
             } catch (error) {
-                responseDiv.innerHTML = `<div class="error"><strong>Error:</strong> ${error.message}</div>`;
-                responseDiv.classList.add('show');
+                setTimeout(() => {
+                    responseDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                    setTimeout(() => {
+                        responseDiv.classList.add('show');
+                    }, 100);
+                }, 2000);
             } finally {
                 // Re-enable controls
                 button.disabled = false;
                 input.disabled = false;
-                input.focus();
+                // Don't focus input to prevent keyboard popup
             }
         }
     </script>
