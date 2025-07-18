@@ -12,9 +12,9 @@
   "incrementalEdgeWeight": 0.2,
   "poetryLogEnabled": false,
   "nodePopupEnabled": true,
-  "popupOffsetX": 160,
-  "popupOffsetY": 120,
-  "logPanelScale": 100,
+  "popupOffsetX": 140,
+  "popupOffsetY": 50,
+  "logPanelScale": 175,
   "messageDuration": 12,
   "typingSpeed": 20,
   "overlayOpacity": 35,
@@ -30,5 +30,5 @@
   "cameraTargetX": 50,
   "cameraTargetY": 50,
   "currentTheme": "beauty",
-  "timestamp": "2025-07-18T20:52:22.443Z"
+  "timestamp": "2025-07-18T21:42:30.239Z"
 }
