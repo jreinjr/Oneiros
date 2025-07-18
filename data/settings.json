@@ -13,14 +13,14 @@
   "poetryLogEnabled": false,
   "nodePopupEnabled": true,
   "popupOffsetX": 160,
-  "popupOffsetY": 190,
+  "popupOffsetY": 120,
   "logPanelScale": 100,
   "messageDuration": 12,
   "typingSpeed": 20,
   "overlayOpacity": 35,
   "cameraMode": "dreaming",
   "dreamOrbitRadius": 650,
-  "dreamOrbitDuration": 18,
+  "dreamOrbitDuration": 20,
   "dreamOrbitSpeed": 0.03,
   "dreamTransitionDuration": 3,
   "haikuOrbitRadius": 3100,
@@ -30,5 +30,5 @@
   "cameraTargetX": 50,
   "cameraTargetY": 50,
   "currentTheme": "beauty",
-  "timestamp": "2025-07-17T16:48:11.017Z"
+  "timestamp": "2025-07-17T20:54:22.276Z"
 }
