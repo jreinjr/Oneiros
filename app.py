@@ -137,6 +137,11 @@ def graph_visualization():
     """3D Graph visualization page (same as home)"""
     return render_template('pages/graph.html')
 
+@app.route('/webphone')
+def webphone():
+    """Web phone interface - simple input to /listen endpoint"""
+    return render_template('pages/webphone.html')
+
 @app.route('/api/neo4j-config')
 def neo4j_config():
     """Provide Neo4j configuration for client"""
