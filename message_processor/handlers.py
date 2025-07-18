@@ -10,6 +10,7 @@ Different handlers for processing messages:
 
 import logging
 import json
+import random
 from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
 import aiohttp
@@ -161,17 +162,17 @@ class QuoteHandler(BaseHandler):
                         RETURN node.text as quote, a.name as author, node.tags as tags, score, 
                                COALESCE(node.original_id, id(node)) as node_id
                         ORDER BY score DESC
-                        LIMIT 2
+                        LIMIT 10
                     """, embedding=query_embedding, theme=theme).data()
                 else:
                     results = session.run("""
-                        CALL db.index.vector.queryNodes('quote_embeddings', 2, $embedding)
+                        CALL db.index.vector.queryNodes('quote_embeddings', 10, $embedding)
                         YIELD node, score
                         MATCH (node)-[:WRITTEN_BY]->(a:Author)
                         RETURN node.text as quote, a.name as author, node.tags as tags, score, 
                                COALESCE(node.original_id, id(node)) as node_id
                         ORDER BY score DESC
-                        LIMIT 2
+                        LIMIT 10
                     """, embedding=query_embedding).data()
                 
                 if not results:
@@ -182,9 +183,46 @@ class QuoteHandler(BaseHandler):
                         "error": "No similar quotes found"
                     }
                 
+                # Weighted random selection based on similarity scores
+                # Extract scores and normalize them as weights
+                scores = [r['score'] for r in results]
+                # Convert scores to weights (higher score = higher weight)
+                weights = [score for score in scores]
+                
+                # Log all candidates
+                logger.info(f"Vector search returned {len(results)} quotes:")
+                for i, r in enumerate(results):
+                    logger.info(f"  [{i}] Node ID: {r['node_id']}, Score: {r['score']:.4f}")
+                
+                # Select 2 quotes using weighted random sampling without replacement
+                selected_indices = []
+                if len(results) >= 2:
+                    # First selection
+                    first_index = random.choices(range(len(results)), weights=weights, k=1)[0]
+                    selected_indices.append(first_index)
+                    logger.info(f"First selection: [{first_index}] Node ID: {results[first_index]['node_id']}, Score: {results[first_index]['score']:.4f}")
+                    
+                    # Remove selected item from weights for second selection
+                    remaining_indices = [i for i in range(len(results)) if i != first_index]
+                    remaining_weights = [weights[i] for i in remaining_indices]
+                    
+                    # Second selection
+                    if remaining_indices:
+                        second_relative_index = random.choices(range(len(remaining_indices)), weights=remaining_weights, k=1)[0]
+                        second_index = remaining_indices[second_relative_index]
+                        selected_indices.append(second_index)
+                        logger.info(f"Second selection: [{second_index}] Node ID: {results[second_index]['node_id']}, Score: {results[second_index]['score']:.4f}")
+                else:
+                    # If we have less than 2 results, just take what we have
+                    selected_indices = list(range(len(results)))
+                    logger.info(f"Less than 2 results available, selecting all {len(results)} quotes")
+                
+                # Get the selected results
+                selected_results = [results[i] for i in selected_indices]
+                
                 # Return top quote with metadata containing both node IDs
-                result = results[0]
-                node_ids = [str(r['node_id']) for r in results]
+                result = selected_results[0]
+                node_ids = [str(r['node_id']) for r in selected_results]
                 
                 return {
                     "type": "quote",

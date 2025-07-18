@@ -216,8 +216,8 @@
     </style>
 </head>
 <body>
-    <!-- Auto-play audio -->
-    <audio id="zenAudio" autoplay loop>
+    <!-- Background audio (not auto-playing) -->
+    <audio id="zenAudio" loop>
         <source src="{{ url_for('static', filename='audio/zen.mp3') }}" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
@@ -242,6 +242,10 @@
         // Speech recognition variables
         let recognition = null;
         let isRecording = false;
+        let silenceTimer = null;
+        let lastTranscriptTime = Date.now();
+        let restartCount = 0;
+        const MAX_RESTARTS = 5;
         
         // Initialize speech recognition if available
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -250,46 +254,103 @@
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.lang = 'en-US';
+            recognition.maxAlternatives = 1;
+            // Try to prevent automatic stopping
+            recognition.onspeechend = function() {
+                // Override default behavior - don't stop on speech end
+                return false;
+            };
             
             recognition.onstart = function() {
                 isRecording = true;
+                // Always clear currentUtterance when STT starts
+                currentUtterance = '';
+                if (restartCount === 0) {
+                    // Only clear fullUtterance on initial start, not on restarts
+                    fullUtterance = '';
+                }
+                lastTranscriptTime = Date.now();
                 document.getElementById('listeningIndicator').classList.add('show');
                 document.getElementById('inputContainer').classList.add('hidden');
             };
             
             recognition.onend = function() {
+                // When STT completes, concatenate currentUtterance to fullUtterance
+                if (currentUtterance.trim().length > 0) {
+                    fullUtterance = (fullUtterance + ' ' + currentUtterance).trim();
+                    // Update the input to show the final result
+                    document.getElementById('messageInput').value = fullUtterance;
+                }
+                
+                // If we're still supposed to be recording and haven't hit max restarts
+                if (isRecording && silenceTimer && restartCount < MAX_RESTARTS) {
+                    restartCount++;
+                    // Restart recognition to continue listening
+                    setTimeout(() => {
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            console.log('Could not restart recognition:', e);
+                            finalizeRecording();
+                        }
+                    }, 50);
+                    return;
+                }
+                
+                // Otherwise, we're done recording
+                finalizeRecording();
+            };
+            
+            function finalizeRecording() {
                 isRecording = false;
+                clearTimeout(silenceTimer);
+                restartCount = 0;
                 document.getElementById('listeningIndicator').classList.remove('show');
                 document.getElementById('inputContainer').classList.remove('hidden');
                 document.getElementById('inputContainer').classList.add('show');
                 document.getElementById('messageInput').focus();
-            };
+            }
+            
+            let currentUtterance = '';  // Current STT result (gets replaced)
+            let fullUtterance = '';     // Complete transcript (accumulates)
             
             recognition.onresult = function(event) {
-                let finalTranscript = '';
-                let interimTranscript = '';
+                // Update activity timestamp
+                lastTranscriptTime = Date.now();
                 
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
-                    } else {
-                        interimTranscript += transcript;
-                    }
-                }
+                // Get the latest result and replace currentUtterance with it
+                const latestResult = event.results[event.results.length - 1];
+                currentUtterance = latestResult[0].transcript;
                 
+                // Display fullUtterance + currentUtterance
                 const input = document.getElementById('messageInput');
-                if (finalTranscript) {
-                    input.value = finalTranscript;
-                    // Stop recording after getting final transcript
-                    stopRecording();
-                } else {
-                    input.value = interimTranscript;
+                input.value = fullUtterance + currentUtterance;
+                
+                // Only reset timer if we have meaningful content
+                if (currentUtterance.trim().length > 2) {
+                    // Clear existing silence timer
+                    clearTimeout(silenceTimer);
+                    
+                    // Set new silence timer - wait 5 seconds of silence before stopping
+                    silenceTimer = setTimeout(() => {
+                        if (fullUtterance.trim().length > 0 || currentUtterance.trim().length > 0) {
+                            stopRecording();
+                        } else if (restartCount >= MAX_RESTARTS) {
+                            // If we've restarted max times with no meaningful content, stop
+                            stopRecording();
+                        }
+                    }, 5000); // 5 seconds of silence before stopping
                 }
             };
             
             recognition.onerror = function(event) {
                 console.error('Speech recognition error:', event.error);
+                
+                // Don't stop on no-speech errors, just continue
+                if (event.error === 'no-speech') {
+                    return;
+                }
+                
                 stopRecording();
                 // Show input field on error
                 document.getElementById('inputContainer').classList.remove('hidden');
@@ -312,6 +373,10 @@
         
         function stopRecording() {
             if (recognition && isRecording) {
+                isRecording = false;
+                clearTimeout(silenceTimer);
+                silenceTimer = null;
+                restartCount = 0;
                 recognition.stop();
             }
         }
