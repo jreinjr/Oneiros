@@ -12,7 +12,7 @@
   "incrementalEdgeWeight": 0.2,
   "poetryLogEnabled": false,
   "nodePopupEnabled": true,
-  "popupScale": 140,
+  "popupScale": 120,
   "logPanelScale": 175,
   "messageDuration": 12,
   "typingSpeed": 20,
@@ -29,5 +29,5 @@
   "cameraTargetX": 50,
   "cameraTargetY": 50,
   "currentTheme": "beauty",
-  "timestamp": "2025-07-18T23:33:13.784Z"
+  "timestamp": "2025-07-18T23:42:27.255Z"
 }
