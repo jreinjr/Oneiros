@@ -197,7 +197,7 @@
         }
         
         .countdown-timer.active .progress {
-            animation: countdown 5s linear forwards;
+            animation: countdown 4s linear forwards;
         }
         
         .listening-text {
@@ -405,9 +405,19 @@
                 clearTimeout(silenceTimer);
                 restartCount = 0;
                 document.getElementById('listeningIndicator').classList.remove('show');
-                document.getElementById('inputContainer').classList.remove('hidden');
-                document.getElementById('inputContainer').classList.add('show');
-                document.getElementById('messageInput').focus();
+                
+                // Instead of showing input container, directly submit if we have text
+                if (fullUtterance.trim().length > 0) {
+                    // Set the input value to the full utterance
+                    document.getElementById('messageInput').value = fullUtterance;
+                    // Directly send the message
+                    sendMessage();
+                } else {
+                    // Only show input container if no speech was captured
+                    document.getElementById('inputContainer').classList.remove('hidden');
+                    document.getElementById('inputContainer').classList.add('show');
+                    document.getElementById('messageInput').focus();
+                }
             }
             
             let currentUtterance = '';  // Current STT result (gets replaced)
@@ -443,7 +453,7 @@
                             // If we've restarted max times with no meaningful content, stop
                             stopRecording();
                         }
-                    }, 5000); // 5 seconds of silence before stopping
+                    }, 4000); // 4 seconds of silence before stopping
                 }
             };
             
