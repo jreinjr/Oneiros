@@ -180,9 +180,9 @@ def listen():
         
         message = data['message']
         
-        # Get optional processing mode overrides
-        user_mode = data.get('user_mode')
-        screen_mode = data.get('screen_mode')
+        # Always use RAG mode
+        user_mode = 'rag'
+        screen_mode = 'rag'
         
         # Get current theme from server state
         with theme_lock:
@@ -277,14 +277,8 @@ def update_settings():
         if not data:
             return jsonify({'error': 'No settings provided'}), 400
         
-        user_mode = data.get('user_response_mode')
-        screen_mode = data.get('screen_text_mode')
-        
-        if user_mode or screen_mode:
-            message_processor.update_settings(
-                user_mode or message_processor.get_settings()['user_response_mode'],
-                screen_mode or message_processor.get_settings()['screen_text_mode']
-            )
+        # Always use RAG mode regardless of what's sent
+        message_processor.update_settings('rag', 'rag')
         
         return jsonify({
             'status': 'success',

@@ -32,8 +32,8 @@ export const DEFAULT_CONFIG = {
     },
     
     // Message Processing Settings
-    userResponseMode: 'echo',  // echo, llm, quote, rag
-    screenTextMode: 'echo',    // echo, llm, quote, rag
+    userResponseMode: 'rag',  // echo, llm, quote, rag
+    screenTextMode: 'rag',    // echo, llm, quote, rag
     processingModes: ['echo', 'llm', 'quote', 'rag'],
     
     // Logger Settings

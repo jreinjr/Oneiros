@@ -39,8 +39,8 @@ class MessageProcessor:
         self.llm_queue = LLMQueueManager()
         self.handlers = {}
         self.processing_settings = {
-            'user_response_mode': 'echo',
-            'screen_text_mode': 'echo'
+            'user_response_mode': 'rag',
+            'screen_text_mode': 'rag'
         }
         
         # Initialize sentence transformer model once

@@ -442,35 +442,8 @@ export class ControlsManager {
      * Setup processing mode controls
      */
     setupProcessingModeControls() {
-        // Setup user response mode controls
-        const userModeButtons = document.querySelectorAll('.user-response-mode .mode-btn');
-        if (userModeButtons.length > 0) {
-            this.elements.set('userResponseModeButtons', userModeButtons);
-            
-            // Set initial active state
-            const currentUserMode = this.config.get('userResponseMode') || 'echo';
-            userModeButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.mode === currentUserMode);
-                btn.addEventListener('click', () => {
-                    this.setUserResponseMode(btn.dataset.mode);
-                });
-            });
-        }
-
-        // Setup screen text mode controls
-        const screenModeButtons = document.querySelectorAll('.screen-text-mode .mode-btn');
-        if (screenModeButtons.length > 0) {
-            this.elements.set('screenTextModeButtons', screenModeButtons);
-            
-            // Set initial active state
-            const currentScreenMode = this.config.get('screenTextMode') || 'echo';
-            screenModeButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.mode === currentScreenMode);
-                btn.addEventListener('click', () => {
-                    this.setScreenTextMode(btn.dataset.mode);
-                });
-            });
-        }
+        // Mode switching UI has been removed - always use RAG mode
+        // The config defaults are already set to 'rag' in config.js
     }
 
     /**
